@@ -2,7 +2,8 @@
   "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
   "version": 1,
   "cli": {
-    "packageManager": "npm"
+    "packageManager": "npm",
+    "analytics": "d153d42b-2f9f-4738-b008-a7c4ec6ede75"
   },
   "newProjectRoot": "projects",
   "projects": {
@@ -49,10 +50,17 @@
               {
                 "glob": "**/*",
                 "input": "public"
-              }
+              },
+              "src/favicon.ico",
+              "src/assets"
             ],
             "styles": [
+              "node_modules/primeicons/primeicons.css",
+              "node_modules/primeflex/primeflex.css",
               "src/styles.scss"
+            ],
+            "polyfills": [
+              "zone.js"
             ]
           },
           "configurations": {
@@ -74,7 +82,13 @@
             "development": {
               "optimization": false,
               "extractLicenses": false,
-              "sourceMap": true
+              "sourceMap": true,
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.development.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"

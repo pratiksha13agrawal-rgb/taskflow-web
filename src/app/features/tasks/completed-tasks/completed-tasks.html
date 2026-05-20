@@ -1,0 +1,193 @@
+<p-toast position="top-right" />
+<p-confirmdialog />
+
+<div class="completed-tasks">
+
+  <!-- Page header -->
+  <div class="page-header">
+    <div class="page-header__left">
+      <h2>Completed Tasks</h2>
+      <p>{{ totalCompleted() }} tasks completed</p>
+    </div>
+    @if (totalCompleted() > 0) {
+      <button class="btn-clear" (click)="clearAll()">
+        <i class="pi pi-trash"></i>
+        Clear all
+      </button>
+    }
+  </div>
+
+  <!-- Stats row -->
+  <div class="stats-row">
+
+    <div class="stat-pill glass-card">
+      <div class="stat-pill__icon" style="background:#edfff7">
+        <i class="pi pi-check-circle" style="color:#0f6e56"></i>
+      </div>
+      <div class="stat-pill__info">
+        <span class="stat-pill__value">{{ totalCompleted() }}</span>
+        <span class="stat-pill__label">Total completed</span>
+      </div>
+    </div>
+
+    <div class="stat-pill glass-card">
+      <div class="stat-pill__icon" style="background:#f5f0ff">
+        <i class="pi pi-chart-pie" style="color:#5c4dc9"></i>
+      </div>
+      <div class="stat-pill__info">
+        <span class="stat-pill__value">{{ completionRate() }}%</span>
+        <span class="stat-pill__label">Completion rate</span>
+      </div>
+    </div>
+
+    <div class="stat-pill glass-card">
+      <div class="stat-pill__icon" style="background:#fff0f5">
+        <i class="pi pi-filter" style="color:#993556"></i>
+      </div>
+      <div class="stat-pill__info">
+        <span class="stat-pill__value">{{ filteredCompleted().length }}</span>
+        <span class="stat-pill__label">Showing now</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Filters -->
+  <div class="filters glass-card">
+
+    <!-- Search -->
+    <div class="filters__search glass-input">
+      <i class="pi pi-search"></i>
+      <input
+        type="text"
+        placeholder="Search completed tasks..."
+        [value]="searchQuery()"
+        (input)="searchQuery.set($any($event.target).value)"
+      />
+    </div>
+
+    <!-- Category filter -->
+    <p-select
+      [options]="categoryOptions"
+      [ngModel]="selectedCategory()"
+      (ngModelChange)="selectedCategory.set($event)"
+      styleClass="filter-select"
+      placeholder="All Categories"
+    />
+
+    <!-- Priority filter -->
+    <p-select
+      [options]="priorityOptions"
+      [ngModel]="selectedPriority()"
+      (ngModelChange)="selectedPriority.set($event)"
+      styleClass="filter-select"
+      placeholder="All Priorities"
+    />
+
+  </div>
+
+  <!-- Empty state -->
+  @if (filteredCompleted().length === 0) {
+    <div class="empty-state glass-card">
+      <div class="empty-state__icon">
+        <i class="pi pi-check-circle"></i>
+      </div>
+      <h3>No completed tasks</h3>
+      @if (searchQuery() || selectedCategory() !== 'all' || selectedPriority() !== 'all') {
+        <p>No tasks match your current filters.</p>
+        <button class="btn-reset" (click)="searchQuery.set(''); selectedCategory.set('all'); selectedPriority.set('all')">
+          Reset filters
+        </button>
+      } @else {
+        <p>Complete some tasks to see them here.</p>
+      }
+    </div>
+  }
+
+  <!-- Task list -->
+  @if (filteredCompleted().length > 0) {
+    <div class="task-list">
+      @for (task of filteredCompleted(); track task.id) {
+        <div class="task-row glass-card">
+
+          <!-- Done icon -->
+          <div class="task-row__done-icon">
+            <i class="pi pi-check-circle"></i>
+          </div>
+
+          <!-- Content -->
+          <div class="task-row__content">
+            <div class="task-row__top">
+              <span class="task-row__title">{{ task.title }}</span>
+
+              <div class="task-row__badges">
+                <!-- Priority badge -->
+                <span
+                  class="priority-badge"
+                  [style.background]="getPriorityBg(task.priority)"
+                  [style.color]="getPriorityColor(task.priority)"
+                >
+                  <i class="pi pi-flag-fill"></i>
+                  {{ priorityConfig[task.priority].label }}
+                </span>
+
+                <!-- Category badge -->
+                <span
+                  class="category-badge"
+                  [style.background]="getCategoryColor(task.category)"
+                  [style.color]="getCategoryText(task.category)"
+                >
+                  {{ task.category }}
+                </span>
+              </div>
+            </div>
+
+            @if (task.description) {
+              <p class="task-row__desc">{{ task.description }}</p>
+            }
+
+            <div class="task-row__meta">
+
+              @if (task.tags.length) {
+                <div class="task-row__tags">
+                  @for (tag of task.tags; track tag) {
+                    <span class="task-tag">#{{ tag }}</span>
+                  }
+                </div>
+              }
+
+              <span class="task-row__date">
+                <i class="pi pi-calendar"></i>
+                Completed {{ formatDate(task.dueDate) }}
+              </span>
+
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="task-row__actions">
+            <button
+              class="action-btn action-btn--restore"
+              pTooltip="Restore task"
+              tooltipPosition="top"
+              (click)="onRestore(task)"
+            >
+              <i class="pi pi-replay"></i>
+              Restore
+            </button>
+            <button
+              class="action-btn action-btn--delete"
+              pTooltip="Delete permanently"
+              tooltipPosition="top"
+              (click)="onDelete(task)"
+            >
+              <i class="pi pi-trash"></i>
+            </button>
+          </div>
+
+        </div>
+      }
+    </div>
+  }
+
+</div>

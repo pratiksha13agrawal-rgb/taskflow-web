@@ -1,0 +1,22 @@
+.shell {
+  display: flex;
+  min-height: 100vh;
+  background: var(--bg-page);
+
+  &__main {
+    flex: 1;
+    margin-left: var(--sidebar-width);
+    margin-top: var(--header-height);
+    transition: margin-left 0.25s ease;
+    min-height: calc(100vh - var(--header-height));
+  }
+
+  &--collapsed &__main {
+    margin-left: var(--sidebar-collapsed-width);
+  }
+
+  &__content {
+    padding: 28px;
+    max-width: 1400px;
+  }
+}

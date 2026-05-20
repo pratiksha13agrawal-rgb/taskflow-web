@@ -1,1 +1,30 @@
-/* You can add global styles to this file, and also import other style files */
+@use 'styles/reset' as *;
+@use 'styles/variables' as *;
+@use 'styles/mixins' as *;
+@use 'styles/glassmorphism' as *;
+@use 'styles/typography' as *;
+
+@use 'styles/themes/light' as *;
+@use 'styles/themes/dark' as *;
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  font-size: 14px;
+  background: var(--bg-page);
+  color: var(--text-primary);
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--pastel-lavender-300);
+  border-radius: 99px;
+}

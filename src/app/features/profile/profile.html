@@ -1,0 +1,580 @@
+<p-toast position="top-right" />
+
+<div class="profile-page">
+
+  <!-- Page header -->
+  <div class="page-header">
+    <h2>Profile & Settings</h2>
+    <p>Manage your account and preferences</p>
+  </div>
+
+  <!-- Top section: avatar + stats -->
+  <div class="profile-top">
+
+    <!-- Avatar card -->
+    <div class="avatar-card glass-card">
+
+      <!-- Avatar -->
+      <div class="avatar-wrap">
+        <div
+          class="avatar-circle"
+          [style.background]="avatarColors[selectedAvatar()].bg"
+        >
+          <span>{{ getInitials(auth.currentUser()?.name ?? 'User') }}</span>
+        </div>
+        <div class="avatar-status"></div>
+      </div>
+
+      <!-- Name + email -->
+      <div class="avatar-card__info">
+        <h3>{{ auth.currentUser()?.name }}</h3>
+        <p>{{ auth.currentUser()?.email }}</p>
+        <span class="role-badge">Free plan</span>
+      </div>
+
+      <!-- Avatar color picker -->
+      <div class="avatar-colors">
+        <span class="avatar-colors__label">Avatar color</span>
+        <div class="avatar-colors__grid">
+          @for (c of avatarColors; track $index) {
+            <button
+              class="avatar-color-btn"
+              [class.avatar-color-btn--active]="selectedAvatar() === $index"
+              [style.background]="c.bg"
+              [pTooltip]="c.label"
+              tooltipPosition="top"
+              (click)="selectedAvatar.set($index)"
+            >
+              @if (selectedAvatar() === $index) {
+                <i class="pi pi-check"></i>
+              }
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Logout -->
+      <button class="logout-btn" (click)="onLogout()">
+        <i class="pi pi-sign-out"></i>
+        Sign out
+      </button>
+
+    </div>
+
+    <!-- Stats grid -->
+    <div class="profile-stats">
+      @for (stat of stats; track stat.label) {
+        <div class="profile-stat glass-card">
+          <div class="profile-stat__icon"
+               [style.background]="stat.bg">
+            <i [class]="stat.icon" [style.color]="stat.color"></i>
+          </div>
+          <div class="profile-stat__body">
+            <span class="profile-stat__value">{{ stat.value }}</span>
+            <span class="profile-stat__label">{{ stat.label }}</span>
+          </div>
+        </div>
+      }
+    </div>
+
+  </div>
+
+  <!-- Tabs -->
+  <div class="settings-tabs">
+    <button
+      class="settings-tab"
+      [class.settings-tab--active]="activeTab() === 'profile'"
+      (click)="activeTab.set('profile')"
+    >
+      <i class="pi pi-user"></i>
+      Profile
+    </button>
+    <button
+      class="settings-tab"
+      [class.settings-tab--active]="activeTab() === 'security'"
+      (click)="activeTab.set('security')"
+    >
+      <i class="pi pi-lock"></i>
+      Security
+    </button>
+    <button
+      class="settings-tab"
+      [class.settings-tab--active]="activeTab() === 'preferences'"
+      (click)="activeTab.set('preferences')"
+    >
+      <i class="pi pi-cog"></i>
+      Preferences
+    </button>
+  </div>
+
+  <!-- ── Profile tab ──────────────────────────────────────── -->
+  @if (activeTab() === 'profile') {
+    <div class="settings-card glass-card">
+
+      <div class="settings-card__header">
+        <div>
+          <h4>Personal information</h4>
+          <p>Update your profile details</p>
+        </div>
+        @if (!editingProfile()) {
+          <button class="btn-edit" (click)="editingProfile.set(true)">
+            <i class="pi pi-pencil"></i>
+            Edit
+          </button>
+        }
+      </div>
+
+      <form [formGroup]="profileForm" (ngSubmit)="saveProfile()" novalidate>
+        <div class="form-grid">
+
+          <!-- Name -->
+          <div class="form-field">
+            <label>Full name</label>
+            <div class="input-wrap glass-input"
+                 [class.input-wrap--error]="profileForm.get('name')!.invalid && profileForm.get('name')!.touched">
+              <i class="pi pi-user input-icon"></i>
+              <input
+                pInputText
+                formControlName="name"
+                placeholder="Your full name"
+                [readonly]="!editingProfile()"
+              />
+            </div>
+          </div>
+
+          <!-- Email -->
+          <div class="form-field">
+            <label>Email address</label>
+            <div class="input-wrap glass-input">
+              <i class="pi pi-envelope input-icon"></i>
+              <input
+                pInputText
+                formControlName="email"
+                placeholder="your@email.com"
+                [readonly]="!editingProfile()"
+              />
+            </div>
+          </div>
+
+          <!-- Phone -->
+          <div class="form-field">
+            <label>Phone</label>
+            <div class="input-wrap glass-input">
+              <i class="pi pi-phone input-icon"></i>
+              <input
+                pInputText
+                formControlName="phone"
+                placeholder="+1 234 567 8900"
+                [readonly]="!editingProfile()"
+              />
+            </div>
+          </div>
+
+          <!-- Location -->
+          <div class="form-field">
+            <label>Location</label>
+            <div class="input-wrap glass-input">
+              <i class="pi pi-map-marker input-icon"></i>
+              <input
+                pInputText
+                formControlName="location"
+                placeholder="City, Country"
+                [readonly]="!editingProfile()"
+              />
+            </div>
+          </div>
+
+          <!-- Website -->
+          <div class="form-field">
+            <label>Website</label>
+            <div class="input-wrap glass-input">
+              <i class="pi pi-globe input-icon"></i>
+              <input
+                pInputText
+                formControlName="website"
+                placeholder="https://yourwebsite.com"
+                [readonly]="!editingProfile()"
+              />
+            </div>
+          </div>
+
+          <!-- Bio -->
+          <div class="form-field form-field--full">
+            <label>Bio</label>
+            <textarea
+              pTextarea
+              formControlName="bio"
+              rows="3"
+              placeholder="Tell us about yourself..."
+              class="modal-textarea"
+              [readonly]="!editingProfile()"
+            ></textarea>
+          </div>
+
+        </div>
+
+        @if (editingProfile()) {
+          <div class="form-actions">
+            <button
+              type="button"
+              class="btn-cancel"
+              (click)="editingProfile.set(false)"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              class="btn-save"
+              [disabled]="savingProfile()"
+            >
+              @if (savingProfile()) {
+                <i class="pi pi-spin pi-spinner"></i>
+                Saving...
+              } @else {
+                <i class="pi pi-check"></i>
+                Save changes
+              }
+            </button>
+          </div>
+        }
+
+      </form>
+
+    </div>
+  }
+
+  <!-- ── Security tab ─────────────────────────────────────── -->
+  @if (activeTab() === 'security') {
+    <div class="settings-card glass-card">
+
+      <div class="settings-card__header">
+        <div>
+          <h4>Change password</h4>
+          <p>Keep your account secure</p>
+        </div>
+      </div>
+
+      <form
+        [formGroup]="passwordForm"
+        (ngSubmit)="changePassword()"
+        novalidate
+        class="password-form"
+      >
+
+        <div class="form-field">
+          <label>Current password</label>
+          <div class="input-wrap glass-input">
+            <i class="pi pi-lock input-icon"></i>
+            <input
+              pInputText
+              type="password"
+              formControlName="currentPassword"
+              placeholder="Enter current password"
+            />
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label>New password</label>
+          <div class="input-wrap glass-input"
+               [class.input-wrap--error]="passwordForm.get('newPassword')!.invalid && passwordForm.get('newPassword')!.touched">
+            <i class="pi pi-lock input-icon"></i>
+            <input
+              pInputText
+              type="password"
+              formControlName="newPassword"
+              placeholder="Min 8 characters"
+            />
+          </div>
+          @if (passwordForm.get('newPassword')!.invalid && passwordForm.get('newPassword')!.touched) {
+            <span class="field-error">Minimum 8 characters</span>
+          }
+        </div>
+
+        <div class="form-field">
+          <label>Confirm new password</label>
+          <div class="input-wrap glass-input">
+            <i class="pi pi-lock input-icon"></i>
+            <input
+              pInputText
+              type="password"
+              formControlName="confirmPassword"
+              placeholder="Repeat new password"
+            />
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button
+            type="submit"
+            class="btn-save"
+            [disabled]="savingPassword()"
+          >
+            @if (savingPassword()) {
+              <i class="pi pi-spin pi-spinner"></i>
+              Updating...
+            } @else {
+              <i class="pi pi-shield"></i>
+              Update password
+            }
+          </button>
+        </div>
+
+      </form>
+
+    </div>
+
+    <!-- Sessions -->
+    <div class="settings-card glass-card">
+      <div class="settings-card__header">
+        <div>
+          <h4>Active sessions</h4>
+          <p>Devices currently signed in</p>
+        </div>
+      </div>
+
+      <div class="session-list">
+
+        <div class="session-item session-item--current">
+          <div class="session-item__icon">
+            <i class="pi pi-desktop"></i>
+          </div>
+          <div class="session-item__info">
+            <span class="session-item__device">Windows — Chrome</span>
+            <span class="session-item__meta">Current session · Active now</span>
+          </div>
+          <span class="session-badge">Current</span>
+        </div>
+
+        <div class="session-item">
+          <div class="session-item__icon">
+            <i class="pi pi-mobile"></i>
+          </div>
+          <div class="session-item__info">
+            <span class="session-item__device">Android — Chrome</span>
+            <span class="session-item__meta">Last active 2 hours ago</span>
+          </div>
+          <button class="session-revoke">Revoke</button>
+        </div>
+
+      </div>
+
+    </div>
+  }
+
+  <!-- ── Preferences tab ──────────────────────────────────── -->
+  @if (activeTab() === 'preferences') {
+
+    <!-- General preferences -->
+    <div class="settings-card glass-card">
+
+      <div class="settings-card__header">
+        <div>
+          <h4>General preferences</h4>
+          <p>Customize your experience</p>
+        </div>
+      </div>
+
+      <form [formGroup]="prefsForm" (ngSubmit)="savePreferences()" novalidate>
+
+        <div class="form-grid">
+
+          <div class="form-field">
+            <label>Timezone</label>
+            <p-select
+              formControlName="timezone"
+              [options]="timezoneOptions"
+              styleClass="w-full"
+            />
+          </div>
+
+          <div class="form-field">
+            <label>Language</label>
+            <p-select
+              formControlName="language"
+              [options]="languageOptions"
+              styleClass="w-full"
+            />
+          </div>
+
+          <div class="form-field">
+            <label>Date format</label>
+            <p-select
+              formControlName="dateFormat"
+              [options]="dateFormatOptions"
+              styleClass="w-full"
+            />
+          </div>
+
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn-save">
+            <i class="pi pi-check"></i>
+            Save preferences
+          </button>
+        </div>
+
+      </form>
+
+    </div>
+
+    <!-- Appearance -->
+    <div class="settings-card glass-card">
+
+      <div class="settings-card__header">
+        <div>
+          <h4>Appearance</h4>
+          <p>Theme and display settings</p>
+        </div>
+      </div>
+
+      <div class="appearance-row">
+        <div class="appearance-info">
+          <i class="pi" [class.pi-moon]="!theme.isDark()"
+                        [class.pi-sun]="theme.isDark()"></i>
+          <div>
+            <span class="appearance-info__label">
+              {{ theme.isDark() ? 'Dark mode' : 'Light mode' }}
+            </span>
+            <span class="appearance-info__sub">
+              {{ theme.isDark() ? 'Switch to light theme' : 'Switch to dark theme' }}
+            </span>
+          </div>
+        </div>
+        <button
+          class="toggle-switch"
+          [class.toggle-switch--on]="theme.isDark()"
+          (click)="theme.toggle()"
+        >
+          <span class="toggle-switch__knob"></span>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Notifications -->
+    <div class="settings-card glass-card">
+
+      <div class="settings-card__header">
+        <div>
+          <h4>Notifications</h4>
+          <p>Choose what you want to be notified about</p>
+        </div>
+      </div>
+
+      <div class="notif-list">
+
+        <div class="notif-row">
+          <div class="notif-row__info">
+            <span class="notif-row__label">Task reminders</span>
+            <span class="notif-row__sub">Get notified before tasks are due</span>
+          </div>
+          <button
+            class="toggle-switch"
+            [class.toggle-switch--on]="notifications().taskReminders"
+            (click)="toggleNotification('taskReminders')"
+          >
+            <span class="toggle-switch__knob"></span>
+          </button>
+        </div>
+
+        <div class="notif-row">
+          <div class="notif-row__info">
+            <span class="notif-row__label">Habit reminders</span>
+            <span class="notif-row__sub">Daily reminders for your habits</span>
+          </div>
+          <button
+            class="toggle-switch"
+            [class.toggle-switch--on]="notifications().habitReminders"
+            (click)="toggleNotification('habitReminders')"
+          >
+            <span class="toggle-switch__knob"></span>
+          </button>
+        </div>
+
+        <div class="notif-row">
+          <div class="notif-row__info">
+            <span class="notif-row__label">Team updates</span>
+            <span class="notif-row__sub">When teammates assign or complete tasks</span>
+          </div>
+          <button
+            class="toggle-switch"
+            [class.toggle-switch--on]="notifications().teamUpdates"
+            (click)="toggleNotification('teamUpdates')"
+          >
+            <span class="toggle-switch__knob"></span>
+          </button>
+        </div>
+
+        <div class="notif-row">
+          <div class="notif-row__info">
+            <span class="notif-row__label">Weekly report</span>
+            <span class="notif-row__sub">Summary of your weekly productivity</span>
+          </div>
+          <button
+            class="toggle-switch"
+            [class.toggle-switch--on]="notifications().weeklyReport"
+            (click)="toggleNotification('weeklyReport')"
+          >
+            <span class="toggle-switch__knob"></span>
+          </button>
+        </div>
+
+        <div class="notif-row">
+          <div class="notif-row__info">
+            <span class="notif-row__label">Email digest</span>
+            <span class="notif-row__sub">Receive daily email summary</span>
+          </div>
+          <button
+            class="toggle-switch"
+            [class.toggle-switch--on]="notifications().emailDigest"
+            (click)="toggleNotification('emailDigest')"
+          >
+            <span class="toggle-switch__knob"></span>
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Danger zone -->
+    <div class="settings-card settings-card--danger glass-card">
+
+      <div class="settings-card__header">
+        <div>
+          <h4>Danger zone</h4>
+          <p>Irreversible actions — proceed with caution</p>
+        </div>
+      </div>
+
+      <div class="danger-actions">
+        <div class="danger-row">
+          <div>
+            <span class="danger-row__label">Clear all tasks</span>
+            <span class="danger-row__sub">Permanently delete all your tasks</span>
+          </div>
+          <button class="btn-danger">
+            <i class="pi pi-trash"></i>
+            Clear tasks
+          </button>
+        </div>
+
+        <div class="danger-row">
+          <div>
+            <span class="danger-row__label">Delete account</span>
+            <span class="danger-row__sub">Permanently delete your account and all data</span>
+          </div>
+          <button class="btn-danger">
+            <i class="pi pi-times-circle"></i>
+            Delete account
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+  }
+
+</div>

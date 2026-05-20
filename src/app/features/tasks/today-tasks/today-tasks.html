@@ -1,0 +1,326 @@
+<p-toast position="top-right" />
+<p-confirmdialog />
+
+<div class="today-tasks">
+
+  <!-- Page header -->
+  <div class="page-header">
+    <div class="page-header__left">
+      <h2>Today's Tasks</h2>
+      <p>{{ filteredTasks().length }} tasks remaining</p>
+    </div>
+    <button class="btn-add" (click)="openAddModal()">
+      <i class="pi pi-plus"></i>
+      Add Task
+    </button>
+  </div>
+
+  <!-- Progress -->
+  <div class="progress-wrap glass-card">
+    <div class="progress-wrap__info">
+      <span>Overall progress</span>
+      <span class="progress-wrap__pct">
+        {{ taskService.completedCount() }} / {{ taskService.totalCount() }} completed
+      </span>
+    </div>
+    <p-progressbar
+      [value]="progressValue()"
+      [showValue]="false"
+      styleClass="task-progress"
+    />
+  </div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <div class="filter-pills">
+      @for (opt of filterOptions; track opt.value) {
+        <button
+          class="filter-pill"
+          [class.filter-pill--active]="activeFilter() === opt.value"
+          (click)="activeFilter.set($any(opt.value))"
+        >
+          {{ opt.label }}
+          @if (opt.value !== 'all') {
+            <span class="filter-pill__count">
+              {{ taskService.getByPriority($any(opt.value)).length }}
+            </span>
+          }
+        </button>
+      }
+    </div>
+
+    <div class="toolbar__search glass-input">
+      <i class="pi pi-search"></i>
+      <input
+        type="text"
+        placeholder="Search tasks..."
+        [value]="searchQuery()"
+        (input)="searchQuery.set($any($event.target).value)"
+      />
+    </div>
+  </div>
+
+  <!-- Task columns -->
+  <div class="task-columns">
+    @for (priority of priorities; track priority) {
+      @if (activeFilter() === 'all' || activeFilter() === priority) {
+
+        <div class="task-column">
+
+          <!-- Column header -->
+          <div class="column-header"
+               [style.border-left-color]="getPriorityColor(priority)">
+            <div class="column-header__left">
+              <span class="column-header__dot"
+                    [style.background]="getPriorityColor(priority)">
+              </span>
+              <span class="column-header__title">
+                {{ priorityConfig[priority].label }} Priority
+              </span>
+            </div>
+            <span class="column-header__count">
+              {{ filteredTasks().filter(t => t.priority === priority).length }}
+            </span>
+          </div>
+
+          <!-- Drop list -->
+          <div
+            cdkDropList
+            [cdkDropListData]="filteredTasks().filter(t => t.priority === priority)"
+            (cdkDropListDropped)="onDrop($event, priority)"
+            class="drop-list"
+          >
+            @if (filteredTasks().filter(t => t.priority === priority).length === 0) {
+              <div class="empty-col">
+                <i class="pi pi-check-circle"></i>
+                <span>No {{ priority }} priority tasks</span>
+              </div>
+            }
+
+            @for (task of filteredTasks().filter(t => t.priority === priority); track task.id) {
+              <div
+                cdkDrag
+                class="task-card glass-card"
+                [class.task-card--done]="task.done"
+              >
+
+                <!-- Drag handle -->
+                <div class="task-card__drag" cdkDragHandle>
+                  <i class="pi pi-bars"></i>
+                </div>
+
+                <!-- Checkbox -->
+                <button
+                  class="task-card__check"
+                  [class.task-card__check--done]="task.done"
+                  [style.border-color]="getPriorityColor(task.priority)"
+                  [style.background-color]="task.done ? getPriorityColor(task.priority) : 'transparent'"
+                  (click)="onToggle(task.id, $event)"
+                >
+                  @if (task.done) {
+                    <i class="pi pi-check"></i>
+                  }
+                </button>
+
+                <!-- Content -->
+                <div class="task-card__content">
+
+                  <div class="task-card__top">
+                    <span class="task-card__title">{{ task.title }}</span>
+                    <div class="task-card__actions">
+                      <button
+                        class="task-card__btn"
+                        pTooltip="Edit"
+                        tooltipPosition="top"
+                        (click)="openEditModal(task, $event)"
+                      >
+                        <i class="pi pi-pencil"></i>
+                      </button>
+                      <button
+                        class="task-card__btn task-card__btn--del"
+                        pTooltip="Delete"
+                        tooltipPosition="top"
+                        (click)="onDelete(task, $event)"
+                      >
+                        <i class="pi pi-trash"></i>
+                      </button>
+                    </div>
+                  </div>
+
+                  @if (task.description) {
+                    <p class="task-card__desc">{{ task.description }}</p>
+                  }
+
+                  <div class="task-card__meta">
+                    <span
+                      class="task-card__cat"
+                      [style.background]="getCategoryColor(task.category)"
+                      [style.color]="getCategoryText(task.category)"
+                    >
+                      {{ task.category }}
+                    </span>
+
+                    <span
+                      class="task-card__due"
+                      [class.task-card__due--overdue]="isOverdue(task.dueDate) && !task.done"
+                    >
+                      <i class="pi pi-calendar"></i>
+                      {{ formatDate(task.dueDate) }}
+                    </span>
+
+                    @if (task.tags.length) {
+                      <div class="task-card__tags">
+                        @for (tag of task.tags; track tag) {
+                          <span class="task-tag">#{{ tag }}</span>
+                        }
+                      </div>
+                    }
+                  </div>
+
+                </div>
+
+                <!-- Priority strip -->
+                <div
+                  class="task-card__strip"
+                  [style.background]="getPriorityColor(task.priority)"
+                ></div>
+
+                <!-- Drag placeholder -->
+                <div *cdkDragPlaceholder class="drag-placeholder"></div>
+
+              </div>
+            }
+
+          </div>
+
+        </div>
+
+      }
+    }
+  </div>
+
+</div>
+
+<!-- Add / Edit Modal -->
+<p-dialog
+  [visible]="showModal()"
+  (visibleChange)="showModal.set($event)"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [closable]="true"
+  (onHide)="closeModal()"
+  styleClass="task-modal"
+  [header]="editingTask() ? 'Edit Task' : 'Add New Task'"
+  [style]="{ width: '520px' }"
+>
+
+  <form [formGroup]="form" (ngSubmit)="onSave()" novalidate>
+
+    <!-- Title -->
+    <div class="modal-field">
+      <label>Task title <span class="req">*</span></label>
+      <div class="input-wrap glass-input"
+           [class.input-wrap--error]="form.get('title')!.invalid && form.get('title')!.touched">
+        <i class="pi pi-pencil input-icon"></i>
+        <input
+          pInputText
+          formControlName="title"
+          placeholder="What needs to be done?"
+        />
+      </div>
+      @if (form.get('title')!.invalid && form.get('title')!.touched) {
+        <span class="field-error">Title required — min 3 characters</span>
+      }
+    </div>
+
+    <!-- Description -->
+    <div class="modal-field">
+      <label>Description</label>
+      <textarea
+        pTextarea
+        formControlName="description"
+        rows="3"
+        placeholder="Add more details..."
+        class="modal-textarea"
+      ></textarea>
+    </div>
+
+    <!-- Priority + Category -->
+    <div class="modal-row">
+      <div class="modal-field">
+        <label>Priority <span class="req">*</span></label>
+        <p-select
+          formControlName="priority"
+          [options]="priorityOptions"
+          placeholder="Select priority"
+          styleClass="w-full"
+        />
+      </div>
+      <div class="modal-field">
+        <label>Category <span class="req">*</span></label>
+        <p-select
+          formControlName="category"
+          [options]="categoryOptions"
+          placeholder="Select category"
+          styleClass="w-full"
+        />
+      </div>
+    </div>
+
+    <!-- Due date -->
+    <div class="modal-field">
+      <label>Due date</label>
+      <p-datepicker
+        formControlName="dueDate"
+        [showIcon]="true"
+        dateFormat="dd/mm/yy"
+        styleClass="w-full"
+        placeholder="Pick a due date"
+      />
+    </div>
+
+    <!-- Tags -->
+    <div class="modal-field">
+      <label>Tags</label>
+      <div class="input-wrap glass-input">
+        <i class="pi pi-tag input-icon"></i>
+        <input
+          type="text"
+          placeholder="Type tag and press Enter"
+          [value]="tagInput()"
+          (input)="tagInput.set($any($event.target).value)"
+          (keydown)="onTagKeydown($event)"
+        />
+      </div>
+      @if (tags().length) {
+        <div class="tag-chips">
+          @for (tag of tags(); track tag) {
+            <span class="task-tag task-tag--removable">
+              #{{ tag }}
+              <button type="button" (click)="removeTag(tag)">
+                <i class="pi pi-times"></i>
+              </button>
+            </span>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Actions -->
+    <div class="modal-actions">
+      <button type="button" class="btn-cancel" (click)="closeModal()">
+        Cancel
+      </button>
+      <button type="submit" class="btn-save">
+        <i class="pi"
+           [class.pi-plus]="!editingTask()"
+           [class.pi-check]="!!editingTask()">
+        </i>
+        {{ editingTask() ? 'Save changes' : 'Add task' }}
+      </button>
+    </div>
+
+  </form>
+
+</p-dialog>

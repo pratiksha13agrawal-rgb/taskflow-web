@@ -1,0 +1,462 @@
+<p-toast position="top-right" />
+<p-confirmdialog />
+
+<div class="team-page">
+
+  <!-- Page header -->
+  <div class="page-header">
+    <div class="page-header__left">
+      <h2>{{ teamService.workspace().name }}</h2>
+      <p>{{ teamService.workspace().description }}</p>
+    </div>
+    <div class="page-header__actions">
+      <button class="btn-invite" (click)="showInviteModal.set(true)">
+        <i class="pi pi-user-plus"></i>
+        Invite member
+      </button>
+      <button class="btn-add" (click)="openAddTaskModal()">
+        <i class="pi pi-plus"></i>
+        Add task
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="team-stats">
+
+    <div class="team-stat glass-card">
+      <div class="team-stat__icon" style="background:#f5f0ff">
+        <i class="pi pi-users" style="color:#5c4dc9"></i>
+      </div>
+      <div class="team-stat__body">
+        <span class="team-stat__value">
+          {{ teamService.activeMembers() }}
+        </span>
+        <span class="team-stat__label">Active members</span>
+      </div>
+    </div>
+
+    <div class="team-stat glass-card">
+      <div class="team-stat__icon" style="background:#fffbf0">
+        <i class="pi pi-list" style="color:#854f0b"></i>
+      </div>
+      <div class="team-stat__body">
+        <span class="team-stat__value">
+          {{ teamService.totalTasks() }}
+        </span>
+        <span class="team-stat__label">Total tasks</span>
+      </div>
+    </div>
+
+    <div class="team-stat glass-card">
+      <div class="team-stat__icon" style="background:#f0f8ff">
+        <i class="pi pi-spin pi-spinner" style="color:#185fa5"></i>
+      </div>
+      <div class="team-stat__body">
+        <span class="team-stat__value">
+          {{ teamService.inProgressTasks() }}
+        </span>
+        <span class="team-stat__label">In progress</span>
+      </div>
+    </div>
+
+    <div class="team-stat glass-card">
+      <div class="team-stat__icon" style="background:#edfff7">
+        <i class="pi pi-check-circle" style="color:#0f6e56"></i>
+      </div>
+      <div class="team-stat__body">
+        <span class="team-stat__value">
+          {{ completionRate() }}%
+        </span>
+        <span class="team-stat__label">Completion rate</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Tabs -->
+  <div class="team-tabs">
+    <button
+      class="team-tab"
+      [class.team-tab--active]="activeTab() === 'board'"
+      (click)="activeTab.set('board')"
+    >
+      <i class="pi pi-table"></i>
+      Task board
+    </button>
+    <button
+      class="team-tab"
+      [class.team-tab--active]="activeTab() === 'members'"
+      (click)="activeTab.set('members')"
+    >
+      <i class="pi pi-users"></i>
+      Members
+      <span class="team-tab__count">
+        {{ teamService.members().length }}
+      </span>
+    </button>
+  </div>
+
+  <!-- ── Task board ─────────────────────────────────────── -->
+  @if (activeTab() === 'board') {
+    <div class="task-board">
+
+      @for (col of boardColumns; track col.key) {
+        <div class="board-col">
+
+          <!-- Column header -->
+          <div class="board-col__header"
+               [style.border-left-color]="col.color">
+            <div class="board-col__title">
+              <span class="board-col__dot"
+                    [style.background]="col.color">
+              </span>
+              {{ col.label }}
+            </div>
+            <span class="board-col__count"
+                  [style.background]="col.bg"
+                  [style.color]="col.color">
+              {{ getColumnTasks()(col.key).length }}
+            </span>
+          </div>
+
+          <!-- Tasks -->
+          <div class="board-col__tasks">
+
+            @if (getColumnTasks()(col.key).length === 0) {
+              <div class="board-empty">
+                <i class="pi pi-inbox"></i>
+                <span>No tasks</span>
+              </div>
+            }
+
+            @for (task of getColumnTasks()(col.key); track task.id) {
+              <div class="board-task glass-card">
+
+                <!-- Priority strip -->
+                <div
+                  class="board-task__strip"
+                  [style.background]="getPriorityColor(task.priority)"
+                ></div>
+
+                <!-- Header -->
+                <div class="board-task__header">
+                  <span
+                    class="board-task__priority"
+                    [style.background]="getPriorityBg(task.priority)"
+                    [style.color]="getPriorityColor(task.priority)"
+                  >
+                    {{ task.priority | titlecase }}
+                  </span>
+                  <div class="board-task__actions">
+                    <button
+                      class="board-task__btn"
+                      pTooltip="Edit"
+                      tooltipPosition="top"
+                      (click)="openEditTaskModal(task)"
+                    >
+                      <i class="pi pi-pencil"></i>
+                    </button>
+                    <button
+                      class="board-task__btn board-task__btn--del"
+                      pTooltip="Delete"
+                      tooltipPosition="top"
+                      (click)="onDeleteTask(task)"
+                    >
+                      <i class="pi pi-trash"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Title -->
+                <p class="board-task__title">{{ task.title }}</p>
+
+                <!-- Footer -->
+                <div class="board-task__footer">
+
+                  <!-- Assignee -->
+                  @if (getMember(task.assigneeId); as member) {
+                    <div class="board-task__assignee">
+                      <div
+                        class="assignee-avatar"
+                        [style.background]="member.avatar"
+                        [pTooltip]="member.name"
+                        tooltipPosition="top"
+                      >
+                        {{ getInitials(member.name) }}
+                      </div>
+                      <span class="assignee-name">{{ member.name }}</span>
+                    </div>
+                  }
+
+                  <!-- Due date -->
+                  <span class="board-task__due">
+                    <i class="pi pi-calendar"></i>
+                    {{ formatDate(task.dueDate) }}
+                  </span>
+
+                </div>
+
+                <!-- Category tag -->
+                <span class="board-task__cat">{{ task.category }}</span>
+
+              </div>
+            }
+
+          </div>
+        </div>
+      }
+
+    </div>
+  }
+
+  <!-- ── Members tab ───────────────────────────────────── -->
+  @if (activeTab() === 'members') {
+    <div class="members-section">
+
+      <div class="members-grid">
+        @for (member of teamService.members(); track member.id) {
+          <div class="member-card glass-card">
+
+            <!-- Avatar + status -->
+            <div class="member-card__top">
+              <div class="member-avatar-wrap">
+                <div
+                  class="member-avatar"
+                  [style.background]="member.avatar"
+                >
+                  {{ getInitials(member.name) }}
+                </div>
+                <span
+                  class="member-status-dot"
+                  [class.member-status-dot--active]="member.status === 'active'"
+                  [class.member-status-dot--invited]="member.status === 'invited'"
+                ></span>
+              </div>
+
+              <!-- Role badge -->
+              <span
+                class="role-badge"
+                [style.background]="roleConfig[member.role].bg"
+                [style.color]="roleConfig[member.role].color"
+              >
+                {{ roleConfig[member.role].label }}
+              </span>
+            </div>
+
+            <!-- Info -->
+            <div class="member-card__info">
+              <h4>{{ member.name }}</h4>
+              <p>{{ member.email }}</p>
+              <span class="member-status-text"
+                [class.member-status-text--invited]="member.status === 'invited'"
+              >
+                {{ member.status === 'invited' ? 'Invitation pending' : 'Active' }}
+              </span>
+            </div>
+
+            <!-- Task stats -->
+            <div class="member-card__stats">
+              <div class="member-stat">
+                <span class="member-stat__value">
+                  {{ member.tasksAssigned }}
+                </span>
+                <span class="member-stat__label">Assigned</span>
+              </div>
+              <div class="member-stat-divider"></div>
+              <div class="member-stat">
+                <span class="member-stat__value">
+                  {{ member.tasksCompleted }}
+                </span>
+                <span class="member-stat__label">Completed</span>
+              </div>
+              <div class="member-stat-divider"></div>
+              <div class="member-stat">
+                <span class="member-stat__value">
+                  @if (member.tasksAssigned > 0) {
+                    {{ Math.round((member.tasksCompleted / member.tasksAssigned) * 100) }}%
+                  } @else {
+                    0%
+                  }
+                </span>
+                <span class="member-stat__label">Rate</span>
+              </div>
+            </div>
+
+            <!-- Actions -->
+            @if (member.role !== 'owner') {
+              <div class="member-card__actions">
+                <p-select
+                  [options]="roleOptions"
+                  [ngModel]="member.role"
+                  (ngModelChange)="onRoleChange(member, $event)"
+                  styleClass="role-select"
+                  [placeholder]="member.role"
+                />
+                <button
+                  class="btn-remove"
+                  pTooltip="Remove member"
+                  tooltipPosition="top"
+                  (click)="onRemoveMember(member)"
+                >
+                  <i class="pi pi-user-minus"></i>
+                </button>
+              </div>
+            }
+
+          </div>
+        }
+      </div>
+
+    </div>
+  }
+
+</div>
+
+<!-- Invite Modal -->
+<p-dialog
+  [visible]="showInviteModal()"
+  (visibleChange)="showInviteModal.set($event)"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  header="Invite team member"
+  [style]="{ width: '440px' }"
+>
+  <form [formGroup]="inviteForm" (ngSubmit)="onInvite()" novalidate>
+
+    <div class="modal-field">
+      <label>Email address <span class="req">*</span></label>
+      <div class="input-wrap glass-input"
+           [class.input-wrap--error]="inviteForm.get('email')!.invalid && inviteForm.get('email')!.touched">
+        <i class="pi pi-envelope input-icon"></i>
+        <input
+          pInputText
+          formControlName="email"
+          placeholder="colleague@email.com"
+          type="email"
+        />
+      </div>
+      @if (inviteForm.get('email')!.invalid && inviteForm.get('email')!.touched) {
+        <span class="field-error">Valid email required</span>
+      }
+    </div>
+
+    <div class="modal-field">
+      <label>Role</label>
+      <p-select
+        formControlName="role"
+        [options]="roleOptions"
+        styleClass="w-full"
+      />
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" class="btn-cancel"
+              (click)="showInviteModal.set(false)">
+        Cancel
+      </button>
+      <button type="submit" class="btn-save">
+        <i class="pi pi-send"></i>
+        Send invite
+      </button>
+    </div>
+
+  </form>
+</p-dialog>
+
+<!-- Add / Edit Task Modal -->
+<p-dialog
+  [visible]="showTaskModal()"
+  (visibleChange)="showTaskModal.set($event)"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [header]="editingTask() ? 'Edit task' : 'Add team task'"
+  [style]="{ width: '500px' }"
+>
+  <form [formGroup]="taskForm" (ngSubmit)="onSaveTask()" novalidate>
+
+    <!-- Title -->
+    <div class="modal-field">
+      <label>Title <span class="req">*</span></label>
+      <div class="input-wrap glass-input"
+           [class.input-wrap--error]="taskForm.get('title')!.invalid && taskForm.get('title')!.touched">
+        <i class="pi pi-pencil input-icon"></i>
+        <input pInputText formControlName="title"
+               placeholder="Task title" />
+      </div>
+      @if (taskForm.get('title')!.invalid && taskForm.get('title')!.touched) {
+        <span class="field-error">Title required — min 3 chars</span>
+      }
+    </div>
+
+    <!-- Assignee + Priority -->
+    <div class="modal-row">
+      <div class="modal-field">
+        <label>Assign to <span class="req">*</span></label>
+        <p-select
+          formControlName="assigneeId"
+          [options]="memberOptions()"
+          placeholder="Select member"
+          styleClass="w-full"
+        />
+      </div>
+      <div class="modal-field">
+        <label>Priority</label>
+        <p-select
+          formControlName="priority"
+          [options]="priorityOptions"
+          styleClass="w-full"
+        />
+      </div>
+    </div>
+
+    <!-- Status + Category -->
+    <div class="modal-row">
+      <div class="modal-field">
+        <label>Status</label>
+        <p-select
+          formControlName="status"
+          [options]="statusOptions"
+          styleClass="w-full"
+        />
+      </div>
+      <div class="modal-field">
+        <label>Category</label>
+        <p-select
+          formControlName="category"
+          [options]="categoryOptions"
+          styleClass="w-full"
+        />
+      </div>
+    </div>
+
+    <!-- Due date -->
+    <div class="modal-field">
+      <label>Due date</label>
+      <p-datepicker
+        formControlName="dueDate"
+        [showIcon]="true"
+        dateFormat="dd/mm/yy"
+        styleClass="w-full"
+        placeholder="Select date"
+      />
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" class="btn-cancel"
+              (click)="showTaskModal.set(false)">
+        Cancel
+      </button>
+      <button type="submit" class="btn-save">
+        <i class="pi"
+           [class.pi-plus]="!editingTask()"
+           [class.pi-check]="!!editingTask()">
+        </i>
+        {{ editingTask() ? 'Save changes' : 'Add task' }}
+      </button>
+    </div>
+
+  </form>
+</p-dialog>

@@ -19,6 +19,10 @@ yarn-error.log
 *.launch
 .settings/
 *.sublime-workspace
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
 
 # Visual Studio Code
 .vscode/*
@@ -42,3 +46,10 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+
+# Environment
+src/environments/environment.prod.ts
+
+# Logs
+*.log
+npm-debug.log*

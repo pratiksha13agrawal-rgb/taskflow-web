@@ -1,0 +1,380 @@
+<p-toast position="top-right" />
+<p-confirmdialog />
+
+<div class="notes-page">
+
+  <!-- Page header -->
+  <div class="page-header">
+    <div class="page-header__left">
+      <h2>Notes</h2>
+      <p>{{ noteService.total() }} notes</p>
+    </div>
+    <div class="page-header__right">
+      <!-- View toggle -->
+      <div class="view-toggle">
+        <button
+          class="view-btn"
+          [class.view-btn--active]="viewMode() === 'grid'"
+          (click)="viewMode.set('grid')"
+          pTooltip="Grid view"
+        >
+          <i class="pi pi-th-large"></i>
+        </button>
+        <button
+          class="view-btn"
+          [class.view-btn--active]="viewMode() === 'list'"
+          (click)="viewMode.set('list')"
+          pTooltip="List view"
+        >
+          <i class="pi pi-list"></i>
+        </button>
+      </div>
+      <button class="btn-add" (click)="openAddModal()">
+        <i class="pi pi-plus"></i>
+        New Note
+      </button>
+    </div>
+  </div>
+
+  <!-- Search + color filters -->
+  <div class="toolbar">
+    <div class="toolbar__search glass-input">
+      <i class="pi pi-search"></i>
+      <input
+        type="text"
+        placeholder="Search notes..."
+        [value]="searchQuery()"
+        (input)="searchQuery.set($any($event.target).value)"
+      />
+      @if (searchQuery()) {
+        <button class="clear-search" (click)="searchQuery.set('')">
+          <i class="pi pi-times"></i>
+        </button>
+      }
+    </div>
+
+    <!-- Color filters -->
+    <div class="color-filters">
+      <button
+        class="color-filter"
+        [class.color-filter--active]="activeColor() === 'all'"
+        (click)="activeColor.set('all')"
+      >
+        All
+      </button>
+      @for (color of colorKeys; track color) {
+        <button
+          class="color-filter color-filter--dot"
+          [class.color-filter--active]="activeColor() === color"
+          [style.background]="getColorBg(color)"
+          [style.border-color]="activeColor() === color ? getColorBorder(color) : 'transparent'"
+          (click)="activeColor.set(color)"
+          [pTooltip]="color | titlecase"
+        >
+          <span
+            class="color-dot"
+            [style.background]="getColorBorder(color)"
+          ></span>
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Empty state -->
+  @if (filteredNotes().length === 0) {
+    <div class="empty-state glass-card">
+      <div class="empty-state__icon">
+        <i class="pi pi-file-edit"></i>
+      </div>
+      <h3>No notes found</h3>
+      <p>
+        @if (searchQuery()) {
+          No notes match "{{ searchQuery() }}"
+        } @else {
+          Create your first note to get started.
+        }
+      </p>
+      <button class="btn-add" (click)="openAddModal()">
+        <i class="pi pi-plus"></i>
+        New Note
+      </button>
+    </div>
+  }
+
+  <!-- Pinned notes -->
+  @if (pinnedNotes().length > 0) {
+    <div class="notes-section">
+      <div class="notes-section__header">
+        <i class="pi pi-thumbtack"></i>
+        <span>Pinned</span>
+      </div>
+      <div class="notes-grid" [class.notes-list]="viewMode() === 'list'">
+        @for (note of pinnedNotes(); track note.id) {
+          <div
+            class="note-card"
+            [class.note-card--list]="viewMode() === 'list'"
+            [style.background]="getColorBg(note.color)"
+            [style.border-color]="getColorBorder(note.color)"
+            (click)="openEditModal(note, $event)"
+          >
+            <!-- Pin badge -->
+            <div class="note-card__pin">
+              <i class="pi pi-thumbtack"></i>
+            </div>
+
+            <!-- Header -->
+            <div class="note-card__header">
+              <span
+                class="note-card__title"
+                [style.color]="getNoteTextColor(note.color)"
+              >
+                {{ note.title }}
+              </span>
+              <div class="note-card__actions">
+                <button
+                  class="note-action-btn"
+                  pTooltip="Unpin"
+                  tooltipPosition="top"
+                  (click)="onPin(note, $event)"
+                >
+                  <i class="pi pi-times"></i>
+                </button>
+                <button
+                  class="note-action-btn note-action-btn--del"
+                  pTooltip="Delete"
+                  tooltipPosition="top"
+                  (click)="onDelete(note, $event)"
+                >
+                  <i class="pi pi-trash"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Content -->
+            <p class="note-card__content">
+              {{ truncate(note.content, viewMode() === 'list' ? 120 : 160) }}
+            </p>
+
+            <!-- Footer -->
+            <div class="note-card__footer">
+              @if (note.tags.length) {
+                <div class="note-card__tags">
+                  @for (tag of note.tags.slice(0, 3); track tag) {
+                    <span
+                      class="note-tag"
+                      [style.color]="getNoteTextColor(note.color)"
+                      [style.border-color]="getColorBorder(note.color)"
+                    >
+                      #{{ tag }}
+                    </span>
+                  }
+                </div>
+              }
+              <span class="note-card__date">
+                {{ formatDate(note.updatedAt) }}
+              </span>
+            </div>
+
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Regular notes -->
+  @if (regularNotes().length > 0) {
+    <div class="notes-section">
+      @if (pinnedNotes().length > 0) {
+        <div class="notes-section__header">
+          <i class="pi pi-file"></i>
+          <span>Other notes</span>
+        </div>
+      }
+      <div class="notes-grid" [class.notes-list]="viewMode() === 'list'">
+        @for (note of regularNotes(); track note.id) {
+          <div
+            class="note-card"
+            [class.note-card--list]="viewMode() === 'list'"
+            [style.background]="getColorBg(note.color)"
+            [style.border-color]="getColorBorder(note.color)"
+            (click)="openEditModal(note, $event)"
+          >
+
+            <!-- Header -->
+            <div class="note-card__header">
+              <span
+                class="note-card__title"
+                [style.color]="getNoteTextColor(note.color)"
+              >
+                {{ note.title }}
+              </span>
+              <div class="note-card__actions">
+                <button
+                  class="note-action-btn"
+                  pTooltip="Pin note"
+                  tooltipPosition="top"
+                  (click)="onPin(note, $event)"
+                >
+                  <i class="pi pi-thumbtack"></i>
+                </button>
+                <button
+                  class="note-action-btn note-action-btn--del"
+                  pTooltip="Delete"
+                  tooltipPosition="top"
+                  (click)="onDelete(note, $event)"
+                >
+                  <i class="pi pi-trash"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Content -->
+            <p class="note-card__content">
+              {{ truncate(note.content, viewMode() === 'list' ? 120 : 160) }}
+            </p>
+
+            <!-- Footer -->
+            <div class="note-card__footer">
+              @if (note.tags.length) {
+                <div class="note-card__tags">
+                  @for (tag of note.tags.slice(0, 3); track tag) {
+                    <span
+                      class="note-tag"
+                      [style.color]="getNoteTextColor(note.color)"
+                      [style.border-color]="getColorBorder(note.color)"
+                    >
+                      #{{ tag }}
+                    </span>
+                  }
+                </div>
+              }
+              <span class="note-card__date">
+                {{ formatDate(note.updatedAt) }}
+              </span>
+            </div>
+
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+</div>
+
+<!-- Add / Edit Modal -->
+<p-dialog
+  [visible]="showModal()"
+  (visibleChange)="showModal.set($event)"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [closable]="true"
+  (onHide)="closeModal()"
+  [header]="editingNote() ? 'Edit Note' : 'New Note'"
+  [style]="{ width: '520px' }"
+>
+
+  <form [formGroup]="form" (ngSubmit)="onSave()" novalidate>
+
+    <!-- Title -->
+    <div class="modal-field">
+      <label>Title <span class="req">*</span></label>
+      <div class="input-wrap glass-input"
+           [class.input-wrap--error]="form.get('title')!.invalid && form.get('title')!.touched">
+        <i class="pi pi-file-edit input-icon"></i>
+        <input
+          pInputText
+          formControlName="title"
+          placeholder="Note title"
+        />
+      </div>
+      @if (form.get('title')!.invalid && form.get('title')!.touched) {
+        <span class="field-error">Title is required</span>
+      }
+    </div>
+
+    <!-- Content -->
+    <div class="modal-field">
+      <label>Content <span class="req">*</span></label>
+      <textarea
+        pTextarea
+        formControlName="content"
+        rows="6"
+        placeholder="Write your note here..."
+        class="modal-textarea"
+        [class.modal-textarea--error]="form.get('content')!.invalid && form.get('content')!.touched"
+      ></textarea>
+      @if (form.get('content')!.invalid && form.get('content')!.touched) {
+        <span class="field-error">Content is required</span>
+      }
+    </div>
+
+    <!-- Color picker -->
+    <div class="modal-field">
+      <label>Color</label>
+      <div class="color-picker">
+        @for (color of colorKeys; track color) {
+          <button
+            type="button"
+            class="color-picker__btn"
+            [class.color-picker__btn--active]="selectedColor() === color"
+            [style.background]="getColorBg(color)"
+            [style.border-color]="getColorBorder(color)"
+            (click)="selectColor(color)"
+            [pTooltip]="color | titlecase"
+            tooltipPosition="top"
+          >
+            @if (selectedColor() === color) {
+              <i class="pi pi-check"
+                 [style.color]="getNoteTextColor(color)">
+              </i>
+            }
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Tags -->
+    <div class="modal-field">
+      <label>Tags</label>
+      <div class="input-wrap glass-input">
+        <i class="pi pi-tag input-icon"></i>
+        <input
+          type="text"
+          placeholder="Type tag and press Enter"
+          [value]="tagInput()"
+          (input)="tagInput.set($any($event.target).value)"
+          (keydown)="onTagKeydown($event)"
+        />
+      </div>
+      @if (tags().length) {
+        <div class="tag-chips">
+          @for (tag of tags(); track tag) {
+            <span class="note-tag note-tag--removable">
+              #{{ tag }}
+              <button type="button" (click)="removeTag(tag)">
+                <i class="pi pi-times"></i>
+              </button>
+            </span>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Actions -->
+    <div class="modal-actions">
+      <button type="button" class="btn-cancel" (click)="closeModal()">
+        Cancel
+      </button>
+      <button type="submit" class="btn-save">
+        <i class="pi"
+           [class.pi-plus]="!editingNote()"
+           [class.pi-check]="!!editingNote()">
+        </i>
+        {{ editingNote() ? 'Save changes' : 'Add note' }}
+      </button>
+    </div>
+
+  </form>
+
+</p-dialog>

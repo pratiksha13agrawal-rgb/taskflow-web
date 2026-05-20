@@ -1,0 +1,174 @@
+<div class="dashboard">
+
+  <!-- Page heading -->
+  <div class="dashboard__heading">
+    <div>
+      <h2>Dashboard</h2>
+      <p>Here's your productivity overview</p>
+    </div>
+    <a routerLink="/app/tasks/today" class="btn-view-all">
+      <i class="pi pi-arrow-right"></i>
+      View all tasks
+    </a>
+  </div>
+
+  <!-- Stat cards -->
+  <div class="stat-grid">
+    @for (card of statCards(); track card.label) {
+      <div class="stat-card glass-card">
+        <div class="stat-card__icon" [style.background]="card.bgColor">
+          <i [class]="card.icon" [style.color]="card.color"></i>
+        </div>
+        <div class="stat-card__body">
+          <span class="stat-card__label">{{ card.label }}</span>
+          <span class="stat-card__value">{{ card.value }}</span>
+          <span class="stat-card__change"
+            [class.stat-card__change--up]="card.changeType === 'up'"
+            [class.stat-card__change--down]="card.changeType === 'down'">
+            <i class="pi"
+              [class.pi-arrow-up]="card.changeType === 'up'"
+              [class.pi-arrow-down]="card.changeType === 'down'"
+              [class.pi-minus]="card.changeType === 'neutral'">
+            </i>
+            {{ card.change }}
+          </span>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Middle row: charts + habits -->
+  <div class="mid-grid">
+
+    <!-- Progress doughnut -->
+    <div class="chart-card glass-card">
+      <div class="chart-card__header">
+        <h4>Task completion</h4>
+        <span class="chart-card__sub">This week</span>
+      </div>
+      <div class="donut-wrap">
+        <canvas #progressChart></canvas>
+        <div class="donut-center">
+          <span class="donut-center__value">{{ completionRate() }}%</span>
+          <span class="donut-center__label">Done</span>
+        </div>
+      </div>
+      <div class="donut-legend">
+        <div class="donut-legend__item">
+          <span class="donut-legend__dot" style="background:#9d8ef0"></span>
+          Completed · 16
+        </div>
+        <div class="donut-legend__item">
+          <span class="donut-legend__dot" style="background:#ede8ff"></span>
+          Remaining · 8
+        </div>
+      </div>
+    </div>
+
+    <!-- Weekly bar chart -->
+    <div class="chart-card chart-card--wide glass-card">
+      <div class="chart-card__header">
+        <h4>Weekly activity</h4>
+        <span class="chart-card__sub">Tasks added vs completed</span>
+      </div>
+      <div class="bar-wrap">
+        <canvas #weekChart></canvas>
+      </div>
+    </div>
+
+    <!-- Habit rings -->
+    <div class="habits-card glass-card">
+      <div class="chart-card__header">
+        <h4>Today's habits</h4>
+        <a routerLink="/app/habits" class="chart-card__link">See all</a>
+      </div>
+      <div class="habit-list">
+        @for (habit of habitRings(); track habit.name) {
+          <div class="habit-item">
+            <div class="habit-ring"
+                 [style.--ring-color]="habit.color"
+                 [style.--ring-progress]="habit.progress">
+              <svg viewBox="0 0 36 36" class="habit-ring__svg">
+                <circle cx="18" cy="18" r="15.9"
+                        fill="none"
+                        stroke="var(--border-color)"
+                        stroke-width="3"/>
+                <circle cx="18" cy="18" r="15.9"
+                        fill="none"
+                        [attr.stroke]="habit.color"
+                        stroke-width="3"
+                        stroke-linecap="round"
+                        stroke-dasharray="100"
+                        [attr.stroke-dashoffset]="100 - habit.progress"
+                        transform="rotate(-90 18 18)"/>
+              </svg>
+              <span class="habit-ring__pct">{{ habit.progress }}%</span>
+            </div>
+            <div class="habit-info">
+              <span class="habit-info__name">{{ habit.name }}</span>
+              <span class="habit-info__streak">
+                🔥 {{ habit.streak }} day streak
+              </span>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Recent tasks table -->
+  <div class="tasks-card glass-card">
+    <div class="tasks-card__header">
+      <h4>Recent tasks</h4>
+      <a routerLink="/app/tasks/today" class="chart-card__link">
+        View all <i class="pi pi-arrow-right"></i>
+      </a>
+    </div>
+
+    <div class="task-list">
+      @for (task of recentTasks(); track task.id) {
+        <div class="task-row" [class.task-row--done]="task.done">
+
+          <!-- Checkbox -->
+          <button
+            class="task-row__check"
+            [class.task-row__check--done]="task.done"
+            (click)="toggleTask(task.id)"
+            [style.border-color]="getPriorityColor(task.priority)"
+          >
+            @if (task.done) {
+              <i class="pi pi-check"></i>
+            }
+          </button>
+
+          <!-- Title + category -->
+          <div class="task-row__info">
+            <span class="task-row__title">{{ task.title }}</span>
+            <span class="task-row__cat"
+              [style.background]="getCategoryColor(task.category)"
+              [style.color]="getCategoryTextColor(task.category)">
+              {{ task.category }}
+            </span>
+          </div>
+
+          <!-- Priority -->
+          <div class="task-row__priority"
+               [style.color]="getPriorityColor(task.priority)">
+            <i class="pi pi-flag-fill"></i>
+            {{ task.priority | titlecase }}
+          </div>
+
+          <!-- Due date -->
+          <div class="task-row__due">
+            <i class="pi pi-calendar"></i>
+            {{ task.due }}
+          </div>
+
+        </div>
+      }
+    </div>
+
+  </div>
+
+</div>

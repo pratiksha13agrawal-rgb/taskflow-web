@@ -1,0 +1,359 @@
+@use '../../../styles/mixins' as *;
+
+.dashboard {
+  @include flex-col;
+  gap: 24px;
+
+  // ── Heading ─────────────────────────────────────────────
+  &__heading {
+    @include flex-between;
+
+    h2 { margin-bottom: 4px; }
+    p  { font-size: 13px; color: var(--text-muted); }
+  }
+}
+
+.btn-view-all {
+  @include flex-center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: var(--pastel-lavender-50);
+  color: var(--pastel-lavender-600);
+  border: 1px solid var(--pastel-lavender-200);
+  border-radius: var(--radius-full);
+  font-size: 13px;
+  font-weight: 500;
+  transition: all var(--transition-fast);
+
+  &:hover {
+    background: var(--pastel-lavender-100);
+    transform: translateX(2px);
+  }
+
+  i { font-size: 11px; }
+}
+
+// ── Stat cards ─────────────────────────────────────────────
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.stat-card {
+  @include flex-center;
+  justify-content: flex-start;
+  gap: 16px;
+  padding: 20px;
+
+  &__icon {
+    width: 50px;
+    height: 50px;
+    border-radius: var(--radius-md);
+    @include flex-center;
+    flex-shrink: 0;
+
+    i { font-size: 22px; }
+  }
+
+  &__body {
+    @include flex-col;
+    gap: 3px;
+    min-width: 0;
+  }
+
+  &__label {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  &__value {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1;
+  }
+
+  &__change {
+    @include flex-center;
+    justify-content: flex-start;
+    gap: 4px;
+    font-size: 11px;
+    color: var(--text-muted);
+
+    i { font-size: 10px; }
+
+    &--up   { color: var(--pastel-mint-500); }
+    &--down { color: var(--priority-high);   }
+  }
+}
+
+// ── Mid grid ───────────────────────────────────────────────
+.mid-grid {
+  display: grid;
+  grid-template-columns: 220px 1fr 260px;
+  gap: 16px;
+  align-items: start;
+}
+
+// ── Chart card ─────────────────────────────────────────────
+.chart-card {
+  @include flex-col;
+  gap: 16px;
+  padding: 20px;
+
+  &__header {
+    @include flex-between;
+    h4 { font-size: 15px; }
+  }
+
+  &__sub {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  &__link {
+    @include flex-center;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--pastel-lavender-500);
+    font-weight: 500;
+    transition: color var(--transition-fast);
+
+    &:hover { color: var(--pastel-rose-400); }
+    i { font-size: 10px; }
+  }
+
+  &--wide .bar-wrap {
+    height: 200px;
+    position: relative;
+  }
+}
+
+// ── Donut chart ────────────────────────────────────────────
+.donut-wrap {
+  position: relative;
+  width: 160px;
+  margin: 0 auto;
+}
+
+.donut-center {
+  position: absolute;
+  inset: 0;
+  @include flex-col;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+
+  &__value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  &__label {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+}
+
+.donut-legend {
+  @include flex-col;
+  gap: 8px;
+
+  &__item {
+    @include flex-center;
+    justify-content: flex-start;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+
+  &__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+}
+
+// ── Habit rings ────────────────────────────────────────────
+.habits-card {
+  padding: 20px;
+  @include flex-col;
+  gap: 16px;
+}
+
+.habit-list {
+  @include flex-col;
+  gap: 14px;
+}
+
+.habit-item {
+  @include flex-center;
+  justify-content: flex-start;
+  gap: 14px;
+}
+
+.habit-ring {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+
+  &__svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(0deg);
+
+    circle:nth-child(2) {
+      transition: stroke-dashoffset 0.6s ease;
+    }
+  }
+
+  &__pct {
+    position: absolute;
+    inset: 0;
+    @include flex-center;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+}
+
+.habit-info {
+  @include flex-col;
+  gap: 2px;
+  min-width: 0;
+
+  &__name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    @include truncate;
+  }
+
+  &__streak {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+}
+
+// ── Recent tasks ───────────────────────────────────────────
+.tasks-card {
+  @include flex-col;
+  gap: 0;
+  padding: 20px;
+  overflow: hidden;
+
+  &__header {
+    @include flex-between;
+    margin-bottom: 16px;
+    h4 { font-size: 15px; }
+  }
+}
+
+.task-list {
+  @include flex-col;
+  gap: 0;
+}
+
+.task-row {
+  @include flex-center;
+  gap: 14px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--border-color);
+  transition: background var(--transition-fast);
+  border-radius: var(--radius-sm);
+
+  &:last-child { border-bottom: none; }
+
+  &:hover { background: var(--bg-surface-2); padding-left: 8px; }
+
+  &--done {
+    opacity: 0.55;
+    .task-row__title { text-decoration: line-through; }
+  }
+
+  // Checkbox
+  &__check {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid;
+    @include flex-center;
+    flex-shrink: 0;
+    transition: all var(--transition-fast);
+    color: white;
+
+    i { font-size: 10px; }
+
+    &--done {
+      background: var(--pastel-mint-400);
+      border-color: var(--pastel-mint-400) !important;
+    }
+
+    &:hover:not(&--done) {
+      background: rgba(157, 142, 240, 0.1);
+    }
+  }
+
+  // Info
+  &__info {
+    flex: 1;
+    @include flex-center;
+    justify-content: flex-start;
+    gap: 10px;
+    min-width: 0;
+  }
+
+  &__title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    @include truncate;
+  }
+
+  &__cat {
+    flex-shrink: 0;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+  }
+
+  // Priority
+  &__priority {
+    @include flex-center;
+    gap: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    min-width: 80px;
+
+    i { font-size: 11px; }
+  }
+
+  // Due date
+  &__due {
+    @include flex-center;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--text-muted);
+    min-width: 80px;
+
+    i { font-size: 11px; }
+  }
+}
+
+// ── Responsive ─────────────────────────────────────────────
+@media (max-width: 1200px) {
+  .stat-grid { grid-template-columns: repeat(2, 1fr); }
+  .mid-grid  { grid-template-columns: 1fr 1fr; }
+  .habits-card { grid-column: span 2; }
+}
+
+@media (max-width: 768px) {
+  .stat-grid { grid-template-columns: 1fr; }
+  .mid-grid  { grid-template-columns: 1fr; }
+}

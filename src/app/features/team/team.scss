@@ -1,0 +1,607 @@
+@use '../../../styles/mixins' as *;
+
+.team-page {
+  @include flex-col;
+  gap: 20px;
+}
+
+// ── Page header ────────────────────────────────────────────
+.page-header {
+  @include flex-between;
+  flex-wrap: wrap;
+  gap: 12px;
+
+  &__left {
+    h2 { margin-bottom: 4px; }
+    p  { font-size: 13px; color: var(--text-muted); margin: 0; }
+  }
+
+  &__actions {
+    @include flex-center;
+    gap: 10px;
+  }
+}
+
+.btn-invite {
+  @include flex-center;
+  gap: 8px;
+  padding: 9px 18px;
+  background: var(--bg-surface);
+  color: var(--pastel-lavender-600);
+  border: 1.5px solid var(--pastel-lavender-200);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+
+  &:hover {
+    background: var(--pastel-lavender-50);
+    transform: translateY(-1px);
+  }
+}
+
+.btn-add {
+  @include flex-center;
+  gap: 8px;
+  padding: 9px 18px;
+  background: linear-gradient(
+    135deg,
+    var(--pastel-lavender-400),
+    var(--pastel-rose-300)
+  );
+  color: white;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+
+  &:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+}
+
+// ── Stats ──────────────────────────────────────────────────
+.team-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+.team-stat {
+  @include flex-center;
+  justify-content: flex-start;
+  gap: 14px;
+  padding: 16px 20px;
+
+  &__icon {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-md);
+    @include flex-center;
+    flex-shrink: 0;
+    i { font-size: 20px; }
+  }
+
+  &__body {
+    @include flex-col;
+    gap: 3px;
+  }
+
+  &__value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1;
+  }
+
+  &__label {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+}
+
+// ── Tabs ───────────────────────────────────────────────────
+.team-tabs {
+  @include flex-center;
+  justify-content: flex-start;
+  gap: 4px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 4px;
+  width: fit-content;
+}
+
+.team-tab {
+  @include flex-center;
+  gap: 8px;
+  padding: 9px 20px;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+
+  i { font-size: 13px; }
+
+  &:hover {
+    color: var(--pastel-lavender-600);
+    background: var(--pastel-lavender-50);
+  }
+
+  &--active {
+    background: var(--pastel-lavender-50);
+    color: var(--pastel-lavender-600);
+    box-shadow: var(--shadow-sm);
+  }
+
+  &__count {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 1px 6px;
+    background: var(--pastel-lavender-100);
+    color: var(--pastel-lavender-600);
+    border-radius: var(--radius-full);
+  }
+}
+
+// ── Task board ─────────────────────────────────────────────
+.task-board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.board-col {
+  @include flex-col;
+  gap: 10px;
+
+  &__header {
+    @include flex-between;
+    padding: 10px 14px;
+    background: var(--bg-surface);
+    border-radius: var(--radius-md);
+    border-left: 3px solid;
+    border-top: 1px solid var(--border-color);
+    border-right: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  &__title {
+    @include flex-center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  &__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  &__count {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+  }
+
+  &__tasks {
+    @include flex-col;
+    gap: 10px;
+    min-height: 80px;
+  }
+}
+
+.board-empty {
+  @include flex-col;
+  align-items: center;
+  gap: 8px;
+  padding: 28px 16px;
+  border: 2px dashed var(--border-color);
+  border-radius: var(--radius-lg);
+  color: var(--text-muted);
+  font-size: 13px;
+
+  i { font-size: 20px; opacity: 0.4; }
+}
+
+// ── Board task card ────────────────────────────────────────
+.board-task {
+  position: relative;
+  @include flex-col;
+  gap: 10px;
+  padding: 14px;
+  overflow: hidden;
+  transition: all var(--transition-fast);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+
+    .board-task__actions { opacity: 1; }
+  }
+
+  &__strip {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 3px;
+    height: 100%;
+  }
+
+  &__header {
+    @include flex-between;
+    padding-left: 8px;
+  }
+
+  &__priority {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: var(--radius-full);
+  }
+
+  &__actions {
+    @include flex-center;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+  }
+
+  &__btn {
+    width: 24px;
+    height: 24px;
+    border-radius: var(--radius-sm);
+    @include flex-center;
+    color: var(--text-muted);
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+
+    i { font-size: 11px; }
+
+    &:hover {
+      background: var(--pastel-lavender-50);
+      color: var(--pastel-lavender-500);
+    }
+
+    &--del:hover {
+      background: #fff5f5;
+      color: #f56565;
+    }
+  }
+
+  &__title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    line-height: 1.4;
+    padding-left: 8px;
+    margin: 0;
+  }
+
+  &__footer {
+    @include flex-between;
+    padding-left: 8px;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  &__assignee {
+    @include flex-center;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  &__due {
+    @include flex-center;
+    gap: 4px;
+    font-size: 11px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+
+    i { font-size: 10px; }
+  }
+
+  &__cat {
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text-muted);
+    padding-left: 8px;
+  }
+}
+
+// ── Assignee ───────────────────────────────────────────────
+.assignee-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  @include flex-center;
+  font-size: 9px;
+  font-weight: 700;
+  color: white;
+  flex-shrink: 0;
+}
+
+.assignee-name {
+  font-size: 11px;
+  color: var(--text-secondary);
+  @include truncate;
+  max-width: 80px;
+}
+
+// ── Members grid ───────────────────────────────────────────
+.members-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.member-card {
+  @include flex-col;
+  gap: 14px;
+  padding: 20px;
+  transition: all var(--transition-fast);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+
+  &__top {
+    @include flex-between;
+  }
+
+  &__info {
+    @include flex-col;
+    gap: 3px;
+
+    h4 {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    p {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin: 0;
+    }
+  }
+
+  &__stats {
+    @include flex-center;
+    gap: 0;
+    background: var(--bg-surface-2);
+    border-radius: var(--radius-md);
+    padding: 10px;
+  }
+
+  &__actions {
+    @include flex-between;
+    gap: 8px;
+
+    ::ng-deep .role-select {
+      flex: 1;
+
+      .p-select-label {
+        font-size: 12px;
+        padding: 6px 10px;
+      }
+    }
+  }
+}
+
+// ── Member avatar ──────────────────────────────────────────
+.member-avatar-wrap {
+  position: relative;
+}
+
+.member-avatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  @include flex-center;
+  font-size: 15px;
+  font-weight: 700;
+  color: white;
+  box-shadow: var(--shadow-sm);
+}
+
+.member-status-dot {
+  position: absolute;
+  bottom: 1px;
+  right: 1px;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  border: 2px solid var(--bg-surface);
+  background: var(--border-color);
+
+  &--active  { background: var(--pastel-mint-400); }
+  &--invited { background: var(--pastel-amber-300); }
+}
+
+.member-status-text {
+  font-size: 11px;
+  color: var(--pastel-mint-500);
+  font-weight: 500;
+
+  &--invited { color: var(--pastel-amber-500); }
+}
+
+// ── Role badge ─────────────────────────────────────────────
+.role-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+}
+
+// ── Member stats ───────────────────────────────────────────
+.member-stat {
+  @include flex-col;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+
+  &__value {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  &__label {
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+}
+
+.member-stat-divider {
+  width: 1px;
+  height: 28px;
+  background: var(--border-color);
+  flex-shrink: 0;
+}
+
+// ── Remove button ──────────────────────────────────────────
+.btn-remove {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-md);
+  @include flex-center;
+  background: #fff5f5;
+  color: #f56565;
+  border: 1.5px solid #fed7d7;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all var(--transition-fast);
+
+  i { font-size: 13px; }
+
+  &:hover { background: #fed7d7; }
+}
+
+// ── Modal ──────────────────────────────────────────────────
+.modal-field {
+  @include flex-col;
+  gap: 6px;
+  margin-bottom: 16px;
+
+  label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+
+  .req { color: #f56565; }
+}
+
+.modal-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.input-wrap {
+  @include flex-center;
+  gap: 10px;
+  padding: 0 14px;
+  height: 44px;
+
+  .input-icon {
+    font-size: 14px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+
+  input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: 14px;
+    color: var(--text-primary);
+    &::placeholder { color: var(--text-muted); }
+  }
+
+  &--error { border-color: #f56565 !important; }
+}
+
+.field-error {
+  font-size: 12px;
+  color: #f56565;
+}
+
+.modal-actions {
+  @include flex-center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color);
+}
+
+.btn-cancel {
+  padding: 8px 18px;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+
+  &:hover {
+    background: var(--pastel-lavender-50);
+    color: var(--pastel-lavender-600);
+  }
+}
+
+.btn-save {
+  @include flex-center;
+  gap: 6px;
+  padding: 8px 20px;
+  background: linear-gradient(
+    135deg,
+    var(--pastel-lavender-400),
+    var(--pastel-rose-300)
+  );
+  color: white;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+
+  &:hover { opacity: 0.9; }
+}
+
+// ── Responsive ─────────────────────────────────────────────
+@media (max-width: 1000px) {
+  .team-stats  { grid-template-columns: repeat(2, 1fr); }
+  .task-board  { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 700px) {
+  .team-stats  { grid-template-columns: 1fr 1fr; }
+  .task-board  { grid-template-columns: 1fr; }
+  .members-grid { grid-template-columns: 1fr; }
+}

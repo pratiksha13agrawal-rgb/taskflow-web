@@ -1,0 +1,391 @@
+<p-toast position="top-right" />
+<p-confirmdialog />
+
+<div class="habits-page">
+
+  <!-- Page header -->
+  <div class="page-header">
+    <div class="page-header__left">
+      <h2>Habit Tracker</h2>
+      <p>Build consistent daily habits</p>
+    </div>
+    <button class="btn-add" (click)="openAddModal()">
+      <i class="pi pi-plus"></i>
+      New Habit
+    </button>
+  </div>
+
+  <!-- Top stats -->
+  <div class="stats-grid">
+
+    <div class="stat-card glass-card">
+      <div class="stat-card__icon" style="background:#f5f0ff">
+        <i class="pi pi-list" style="color:#5c4dc9"></i>
+      </div>
+      <div class="stat-card__body">
+        <span class="stat-card__value">{{ habitService.totalHabits() }}</span>
+        <span class="stat-card__label">Total habits</span>
+      </div>
+    </div>
+
+    <div class="stat-card glass-card">
+      <div class="stat-card__icon" style="background:#edfff7">
+        <i class="pi pi-check-circle" style="color:#0f6e56"></i>
+      </div>
+      <div class="stat-card__body">
+        <span class="stat-card__value">{{ habitService.todayCompleted() }}</span>
+        <span class="stat-card__label">Done today</span>
+      </div>
+    </div>
+
+    <div class="stat-card glass-card">
+      <div class="stat-card__icon" style="background:#fffbf0">
+        <i class="pi pi-bolt" style="color:#854f0b"></i>
+      </div>
+      <div class="stat-card__body">
+        <span class="stat-card__value">{{ habitService.overallStreak() }}</span>
+        <span class="stat-card__label">Best streak</span>
+      </div>
+    </div>
+
+    <!-- Today's progress ring -->
+    <div class="stat-card stat-card--progress glass-card">
+      <div class="progress-ring-wrap">
+        <svg viewBox="0 0 36 36" class="progress-ring">
+          <circle
+            cx="18" cy="18" r="15.9"
+            fill="none"
+            stroke="var(--pastel-lavender-100)"
+            stroke-width="3"
+          />
+          <circle
+            cx="18" cy="18" r="15.9"
+            fill="none"
+            stroke="var(--pastel-lavender-400)"
+            stroke-width="3"
+            stroke-linecap="round"
+            stroke-dasharray="100"
+            [attr.stroke-dashoffset]="100 - todayProgress()"
+            transform="rotate(-90 18 18)"
+          />
+        </svg>
+        <span class="progress-ring__pct">{{ todayProgress() }}%</span>
+      </div>
+      <div class="stat-card__body">
+        <span class="stat-card__value">Today</span>
+        <span class="stat-card__label">
+          {{ habitService.todayCompleted() }}/{{ habitService.totalHabits() }} done
+        </span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Weekly chart -->
+  <div class="chart-card glass-card">
+    <div class="chart-card__header">
+      <h4>This week</h4>
+      <span class="chart-card__sub">Habits completed per day</span>
+    </div>
+    <div class="chart-wrap">
+      <canvas #weekChart></canvas>
+    </div>
+  </div>
+
+  <!-- Category filter -->
+  <div class="category-filters">
+    @for (opt of categoryOptions; track opt.value) {
+      <button
+        class="cat-pill"
+        [class.cat-pill--active]="activeCategory() === opt.value"
+        (click)="activeCategory.set($any(opt.value))"
+      >
+        @if (opt.value !== 'all') {
+          <!-- <i [class]="habitCategories[$any(opt.value)]?.icon"></i> -->
+        }
+        {{ opt.label }}
+      </button>
+    }
+  </div>
+
+  <!-- Habit cards -->
+  <div class="habits-grid">
+
+    @if (filteredHabits().length === 0) {
+      <div class="empty-state glass-card">
+        <i class="pi pi-bolt"></i>
+        <h3>No habits yet</h3>
+        <p>Add your first habit to start tracking.</p>
+      </div>
+    }
+
+    @for (habit of filteredHabits(); track habit.id) {
+      <div
+        class="habit-card glass-card"
+        [class.habit-card--done]="isCompletedToday(habit)"
+      >
+
+        <!-- Card header -->
+        <div class="habit-card__header">
+          <div
+            class="habit-card__icon"
+            [style.background]="habit.bgColor"
+            [style.color]="habit.color"
+          >
+            <i [class]="habit.icon"></i>
+          </div>
+
+          <div class="habit-card__info">
+            <span class="habit-card__name">{{ habit.name }}</span>
+            <span class="habit-card__cat"
+              [style.color]="habitCategories[habit.category].color"
+            >
+              {{ habitCategories[habit.category].label }}
+            </span>
+          </div>
+
+          <div class="habit-card__actions">
+            <button
+              class="habit-action-btn"
+              pTooltip="Edit"
+              tooltipPosition="top"
+              (click)="openEditModal(habit, $event)"
+            >
+              <i class="pi pi-pencil"></i>
+            </button>
+            <button
+              class="habit-action-btn habit-action-btn--del"
+              pTooltip="Delete"
+              tooltipPosition="top"
+              (click)="onDelete(habit, $event)"
+            >
+              <i class="pi pi-trash"></i>
+            </button>
+          </div>
+        </div>
+
+        @if (habit.description) {
+          <p class="habit-card__desc">{{ habit.description }}</p>
+        }
+
+        <!-- Progress ring + stats -->
+        <div class="habit-card__stats">
+
+          <!-- Ring -->
+          <div class="habit-ring">
+            <svg viewBox="0 0 36 36">
+              <circle
+                cx="18" cy="18" r="15.9"
+                fill="none"
+                stroke="var(--border-color)"
+                stroke-width="3"
+              />
+              <circle
+                cx="18" cy="18" r="15.9"
+                fill="none"
+                [attr.stroke]="habit.color"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-dasharray="100"
+                [attr.stroke-dashoffset]="100 - getRate(habit)"
+                transform="rotate(-90 18 18)"
+              />
+            </svg>
+            <span class="habit-ring__pct"
+                  [style.color]="habit.color">
+              {{ getRate(habit) }}%
+            </span>
+          </div>
+
+          <!-- Numbers -->
+          <div class="habit-card__numbers">
+            <div class="habit-number">
+              <span class="habit-number__val">{{ getStreak(habit) }}</span>
+              <span class="habit-number__label">Streak</span>
+            </div>
+            <div class="habit-number">
+              <span class="habit-number__val">{{ habit.targetDays }}</span>
+              <span class="habit-number__label">Target</span>
+            </div>
+            <div class="habit-number">
+              <span class="habit-number__val">{{ habit.entries.length }}</span>
+              <span class="habit-number__label">Total</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Last 7 days -->
+        <div class="habit-card__week">
+          <span class="habit-card__week-label">Last 7 days</span>
+          <div class="week-dots">
+            @for (entry of getLast7(habit); track entry.date) {
+              <div class="week-dot-wrap">
+                <div
+                  class="week-dot"
+                  [class.week-dot--done]="entry.completed"
+                  [style.background]="entry.completed ? habit.color : 'var(--border-color)'"
+                  [pTooltip]="entry.date"
+                  tooltipPosition="top"
+                ></div>
+                <span class="week-dot-day">
+                  {{ getDayLabel(entry.date) }}
+                </span>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Today toggle -->
+        <button
+          class="habit-card__toggle"
+          [class.habit-card__toggle--done]="isCompletedToday(habit)"
+          [style.background]="isCompletedToday(habit) ? habit.color : 'transparent'"
+          [style.border-color]="habit.color"
+          [style.color]="isCompletedToday(habit) ? 'white' : habit.color"
+          (click)="onToggleToday(habit, $event)"
+        >
+          <i class="pi"
+             [class.pi-check]="isCompletedToday(habit)"
+             [class.pi-circle]="!isCompletedToday(habit)">
+          </i>
+          {{ isCompletedToday(habit) ? 'Done today!' : 'Mark today' }}
+        </button>
+
+      </div>
+    }
+
+  </div>
+
+</div>
+
+<!-- Add / Edit Modal -->
+<p-dialog
+  [visible]="showModal()"
+  (visibleChange)="showModal.set($event)"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [closable]="true"
+  (onHide)="closeModal()"
+  [header]="editingHabit() ? 'Edit Habit' : 'New Habit'"
+  [style]="{ width: '500px' }"
+>
+
+  <form [formGroup]="form" (ngSubmit)="onSave()" novalidate>
+
+    <!-- Name -->
+    <div class="modal-field">
+      <label>Habit name <span class="req">*</span></label>
+      <div class="input-wrap glass-input"
+           [class.input-wrap--error]="form.get('name')!.invalid && form.get('name')!.touched">
+        <i class="pi pi-bolt input-icon"></i>
+        <input pInputText formControlName="name" placeholder="e.g. Morning run" />
+      </div>
+      @if (form.get('name')!.invalid && form.get('name')!.touched) {
+        <span class="field-error">Name required — min 2 characters</span>
+      }
+    </div>
+
+    <!-- Description -->
+    <div class="modal-field">
+      <label>Description</label>
+      <textarea
+        pTextarea
+        formControlName="description"
+        rows="2"
+        placeholder="What is this habit about?"
+        class="modal-textarea"
+      ></textarea>
+    </div>
+
+    <!-- Category + Frequency -->
+    <div class="modal-row">
+      <div class="modal-field">
+        <label>Category <span class="req">*</span></label>
+        <p-select
+          formControlName="category"
+          [options]="categoryOptions.slice(1)"
+          styleClass="w-full"
+        />
+      </div>
+      <div class="modal-field">
+        <label>Frequency <span class="req">*</span></label>
+        <p-select
+          formControlName="frequency"
+          [options]="frequencyOptions"
+          styleClass="w-full"
+        />
+      </div>
+    </div>
+
+    <!-- Target days -->
+    <div class="modal-field">
+      <label>Target days</label>
+      <div class="input-wrap glass-input">
+        <i class="pi pi-flag input-icon"></i>
+        <input
+          pInputText
+          type="number"
+          formControlName="targetDays"
+          placeholder="e.g. 21"
+          min="1"
+        />
+      </div>
+    </div>
+
+    <!-- Icon picker -->
+    <div class="modal-field">
+      <label>Icon</label>
+      <div class="icon-picker">
+        @for (icon of habitIcons; track icon) {
+          <button
+            type="button"
+            class="icon-btn"
+            [class.icon-btn--active]="selectedIcon() === icon"
+            (click)="selectedIcon.set(icon)"
+          >
+            <i [class]="icon"></i>
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Color picker -->
+    <div class="modal-field">
+      <label>Color</label>
+      <div class="habit-color-picker">
+        @for (c of habitColors; track $index) {
+          <button
+            type="button"
+            class="hcolor-btn"
+            [class.hcolor-btn--active]="selectedColor() === $index"
+            [style.background]="c.bg"
+            [style.border-color]="c.color"
+            (click)="selectedColor.set($index)"
+          >
+            @if (selectedColor() === $index) {
+              <i class="pi pi-check" [style.color]="c.color"></i>
+            }
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="modal-actions">
+      <button type="button" class="btn-cancel" (click)="closeModal()">
+        Cancel
+      </button>
+      <button type="submit" class="btn-save">
+        <i class="pi"
+           [class.pi-plus]="!editingHabit()"
+           [class.pi-check]="!!editingHabit()">
+        </i>
+        {{ editingHabit() ? 'Save changes' : 'Create habit' }}
+      </button>
+    </div>
+
+  </form>
+
+</p-dialog>

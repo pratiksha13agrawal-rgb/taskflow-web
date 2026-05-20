@@ -1,0 +1,104 @@
+<header class="header" [class.header--expanded]="sidebarCollapsed()">
+
+  <!-- Left: greeting -->
+  <div class="header__left">
+    <div class="header__title">
+      <h4>Good morning, {{ auth.currentUser()?.name?.split(' ')?.at(0) ?? 'there' }} 👋</h4>
+      <p>Here's what's on your plate today.</p>
+    </div>
+  </div>
+
+  <!-- Right: actions -->
+  <div class="header__right">
+
+    <!-- Search -->
+    <div class="header__search glass-input">
+      <i class="pi pi-search search-icon"></i>
+      <input
+        type="text"
+        [(ngModel)]="searchQuery"
+        placeholder="Search tasks, notes..."
+        (keyup.enter)="onSearch()"
+      />
+    </div>
+
+    <!-- Add task button -->
+    <button
+      class="header__add-btn"
+      pTooltip="Add task"
+      tooltipPosition="bottom"
+    >
+      <i class="pi pi-plus"></i>
+    </button>
+
+    <!-- Notifications -->
+    <div class="header__notif-wrap">
+      <button
+        class="header__icon-btn"
+        (click)="notifPanel.toggle($event)"
+        pTooltip="Notifications"
+        tooltipPosition="bottom"
+      >
+        <i class="pi pi-bell"></i>
+        @if (unreadCount > 0) {
+          <span class="header__notif-badge">{{ unreadCount }}</span>
+        }
+      </button>
+
+      <p-popover #notifPanel>
+        <div class="notif-panel">
+
+          <div class="notif-header">
+            <span class="notif-header__title">Notifications</span>
+            @if (unreadCount > 0) {
+              <button class="notif-header__mark-read" (click)="markAllRead()">
+                Mark all read
+              </button>
+            }
+          </div>
+
+          <div class="notif-list">
+            @for (n of notifications; track n.id) {
+              <div class="notif-item" [class.notif-item--unread]="!n.read">
+                <div class="notif-item__dot"
+                     [class.notif-item__dot--active]="!n.read">
+                </div>
+                <div class="notif-item__content">
+                  <p>{{ n.text }}</p>
+                  <span>{{ n.time }}</span>
+                </div>
+              </div>
+            }
+          </div>
+
+        </div>
+      </p-popover>
+    </div>
+
+    <!-- Theme toggle -->
+    <button
+      class="header__icon-btn"
+      (click)="theme.toggle()"
+      [pTooltip]="theme.isDark() ? 'Light mode' : 'Dark mode'"
+      tooltipPosition="bottom"
+    >
+      <i class="pi"
+         [class.pi-sun]="theme.isDark()"
+         [class.pi-moon]="!theme.isDark()">
+      </i>
+    </button>
+
+    <!-- Avatar -->
+    @if (auth.currentUser(); as user) {
+      <a routerLink="/app/profile" class="header__avatar-btn">
+        <p-avatar
+          [label]="getInitials(user.name)"
+          shape="circle"
+          styleClass="header__avatar"
+        />
+      </a>
+    }
+
+  </div>
+
+</header>

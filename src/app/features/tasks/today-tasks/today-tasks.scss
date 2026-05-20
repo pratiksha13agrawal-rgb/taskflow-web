@@ -1,0 +1,533 @@
+@use '../../../../styles/mixins' as *;
+
+.today-tasks {
+  @include flex-col;
+  gap: 20px;
+}
+
+// ── Page header ────────────────────────────────────────────
+.page-header {
+  @include flex-between;
+
+  &__left {
+    h2 { margin-bottom: 4px; }
+    p  { font-size: 13px; color: var(--text-muted); margin: 0; }
+  }
+}
+
+.btn-add {
+  @include flex-center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: linear-gradient(
+    135deg,
+    var(--pastel-lavender-400),
+    var(--pastel-rose-300)
+  );
+  color: white;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+
+  &:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+  }
+}
+
+// ── Progress ───────────────────────────────────────────────
+.progress-wrap {
+  @include flex-col;
+  gap: 10px;
+  padding: 16px 20px;
+
+  &__info {
+    @include flex-between;
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+
+  &__pct {
+    font-weight: 600;
+    color: var(--pastel-lavender-500);
+  }
+
+  ::ng-deep .task-progress {
+    height: 8px;
+    border-radius: var(--radius-full);
+    background: var(--pastel-lavender-100);
+
+    .p-progressbar-value {
+      background: linear-gradient(
+        90deg,
+        var(--pastel-lavender-400),
+        var(--pastel-rose-300)
+      );
+      border-radius: var(--radius-full);
+    }
+  }
+}
+
+// ── Toolbar ────────────────────────────────────────────────
+.toolbar {
+  @include flex-between;
+  gap: 16px;
+  flex-wrap: wrap;
+
+  &__search {
+    @include flex-center;
+    gap: 8px;
+    padding: 0 14px;
+    height: 38px;
+    min-width: 220px;
+
+    i { font-size: 13px; color: var(--text-muted); }
+
+    input {
+      flex: 1;
+      border: none;
+      background: transparent;
+      outline: none;
+      font-size: 13px;
+      color: var(--text-primary);
+      &::placeholder { color: var(--text-muted); }
+    }
+  }
+}
+
+// ── Filter pills ───────────────────────────────────────────
+.filter-pills {
+  @include flex-center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.filter-pill {
+  @include flex-center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: var(--radius-full);
+  font-size: 13px;
+  font-weight: 500;
+  background: var(--bg-surface);
+  border: 1.5px solid var(--border-color);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+
+  &:hover {
+    border-color: var(--pastel-lavender-300);
+    color: var(--pastel-lavender-600);
+  }
+
+  &--active {
+    background: var(--pastel-lavender-50);
+    border-color: var(--pastel-lavender-400);
+    color: var(--pastel-lavender-600);
+  }
+
+  &__count {
+    background: var(--pastel-lavender-100);
+    color: var(--pastel-lavender-600);
+    border-radius: var(--radius-full);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 1px 6px;
+  }
+}
+
+// ── Columns ────────────────────────────────────────────────
+.task-columns {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.task-column {
+  @include flex-col;
+  gap: 10px;
+}
+
+.column-header {
+  @include flex-between;
+  padding: 10px 14px;
+  background: var(--bg-surface);
+  border-radius: var(--radius-md);
+  border-left: 3px solid transparent;
+  border-top: 1px solid var(--border-color);
+  border-right: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+
+  &__left {
+    @include flex-center;
+    gap: 8px;
+  }
+
+  &__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  &__title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  &__count {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-muted);
+    background: var(--bg-surface-2);
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+  }
+}
+
+// ── Drop list ──────────────────────────────────────────────
+.drop-list {
+  @include flex-col;
+  gap: 10px;
+  min-height: 80px;
+}
+
+.empty-col {
+  @include flex-col;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 32px 16px;
+  border: 2px dashed var(--border-color);
+  border-radius: var(--radius-lg);
+  color: var(--text-muted);
+  font-size: 13px;
+
+  i { font-size: 24px; opacity: 0.4; }
+}
+
+// ── Task card ──────────────────────────────────────────────
+.task-card {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px;
+  overflow: hidden;
+  transition: all var(--transition-fast);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+
+    .task-card__actions { opacity: 1; }
+  }
+
+  &--done {
+    opacity: 0.55;
+    .task-card__title { text-decoration: line-through; }
+  }
+
+  &__drag {
+    color: var(--text-muted);
+    cursor: grab;
+    padding-top: 2px;
+    flex-shrink: 0;
+    i { font-size: 12px; }
+    &:active { cursor: grabbing; }
+  }
+
+  &__check {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid;
+    @include flex-center;
+    flex-shrink: 0;
+    margin-top: 2px;
+    transition: all var(--transition-fast);
+    color: white;
+    cursor: pointer;
+    i { font-size: 10px; }
+  }
+
+  &__content {
+    flex: 1;
+    @include flex-col;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  &__top {
+    @include flex-between;
+    gap: 8px;
+  }
+
+  &__title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    line-height: 1.4;
+  }
+
+  &__actions {
+    @include flex-center;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+    flex-shrink: 0;
+  }
+
+  &__btn {
+    width: 26px;
+    height: 26px;
+    border-radius: var(--radius-sm);
+    @include flex-center;
+    color: var(--text-muted);
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    i { font-size: 12px; }
+
+    &:hover {
+      background: var(--pastel-lavender-50);
+      color: var(--pastel-lavender-500);
+    }
+
+    &--del:hover {
+      background: #fff5f5;
+      color: #f56565;
+    }
+  }
+
+  &__desc {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.5;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin: 0;
+  }
+
+  &__meta {
+    @include flex-center;
+    justify-content: flex-start;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  &__cat {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+  }
+
+  &__due {
+    @include flex-center;
+    gap: 4px;
+    font-size: 11px;
+    color: var(--text-muted);
+    i { font-size: 10px; }
+
+    &--overdue { color: #f56565; font-weight: 600; }
+  }
+
+  &__tags {
+    @include flex-center;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+
+  &__strip {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 3px;
+    height: 100%;
+  }
+}
+
+// ── Tags ───────────────────────────────────────────────────
+.task-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 500;
+  padding: 2px 7px;
+  background: var(--pastel-lavender-50);
+  color: var(--pastel-lavender-600);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--pastel-lavender-200);
+
+  &--removable button {
+    @include flex-center;
+    color: var(--pastel-lavender-400);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    transition: color var(--transition-fast);
+    i { font-size: 8px; }
+    &:hover { color: #f56565; }
+  }
+}
+
+// ── Drag ───────────────────────────────────────────────────
+.drag-placeholder {
+  height: 80px;
+  background: var(--pastel-lavender-50);
+  border: 2px dashed var(--pastel-lavender-300);
+  border-radius: var(--radius-lg);
+}
+
+.cdk-drag-preview {
+  box-shadow: var(--shadow-lg);
+  border-radius: var(--radius-lg);
+  opacity: 0.92;
+}
+
+.cdk-drag-animating {
+  transition: transform 200ms ease;
+}
+
+// ── Modal ──────────────────────────────────────────────────
+.modal-field {
+  @include flex-col;
+  gap: 6px;
+  margin-bottom: 16px;
+
+  label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+
+  .req { color: #f56565; margin-left: 2px; }
+}
+
+.modal-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.modal-textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1.5px solid var(--input-border);
+  border-radius: var(--radius-md);
+  background: var(--input-bg);
+  outline: none;
+  resize: vertical;
+  font-size: 13px;
+  color: var(--text-primary);
+  font-family: inherit;
+  transition: border-color var(--transition-fast);
+
+  &:focus { border-color: var(--input-focus); }
+  &::placeholder { color: var(--text-muted); }
+}
+
+.input-wrap {
+  @include flex-center;
+  gap: 10px;
+  padding: 0 14px;
+  height: 44px;
+
+  .input-icon {
+    font-size: 14px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+
+  input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: 14px;
+    color: var(--text-primary);
+    &::placeholder { color: var(--text-muted); }
+  }
+
+  &--error { border-color: #f56565 !important; }
+}
+
+.tag-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.field-error {
+  font-size: 12px;
+  color: #f56565;
+}
+
+.modal-actions {
+  @include flex-center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color);
+}
+
+.btn-cancel {
+  padding: 9px 20px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+
+  &:hover {
+    background: var(--pastel-lavender-50);
+    color: var(--pastel-lavender-600);
+  }
+}
+
+.btn-save {
+  @include flex-center;
+  gap: 8px;
+  padding: 9px 22px;
+  background: linear-gradient(
+    135deg,
+    var(--pastel-lavender-400),
+    var(--pastel-rose-300)
+  );
+  color: white;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+
+  &:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+}
+
+// ── Responsive ─────────────────────────────────────────────
+@media (max-width: 1100px) {
+  .task-columns { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 768px) {
+  .task-columns { grid-template-columns: 1fr; }
+}

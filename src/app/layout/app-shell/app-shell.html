@@ -1,0 +1,19 @@
+<div class="shell" [class.shell--collapsed]="sidebarCollapsed()">
+
+  <!-- Sidebar -->
+  <app-sidebar
+    [collapsed]="sidebarCollapsed()"
+    (toggleCollapse)="onToggleSidebar()"
+  />
+
+  <!-- Header -->
+  <app-header [sidebarCollapsed]="sidebarCollapsed()" />
+
+  <!-- Main content -->
+  <main class="shell__main">
+    <div class="shell__content">
+      <router-outlet />
+    </div>
+  </main>
+
+</div>

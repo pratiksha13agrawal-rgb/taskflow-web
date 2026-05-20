@@ -1,0 +1,418 @@
+<p-toast position="top-right" />
+
+<div class="calendar-page">
+
+  <!-- Page header -->
+  <div class="page-header">
+    <div class="page-header__left">
+      <h2>Calendar</h2>
+      <p>Click any date to add a task</p>
+    </div>
+    <button class="btn-add" (click)="openAddModal()">
+      <i class="pi pi-plus"></i>
+      Add Task
+    </button>
+  </div>
+
+  <!-- Stats -->
+  <div class="cal-stats">
+    <div class="cal-stat glass-card">
+      <div class="cal-stat__icon" style="background:#fff0f5">
+        <i class="pi pi-exclamation-circle" style="color:#f56565"></i>
+      </div>
+      <div class="cal-stat__info">
+        <span class="cal-stat__value">{{ overdueCount }}</span>
+        <span class="cal-stat__label">Overdue</span>
+      </div>
+    </div>
+
+    <div class="cal-stat glass-card">
+      <div class="cal-stat__icon" style="background:#f5f0ff">
+        <i class="pi pi-calendar" style="color:#5c4dc9"></i>
+      </div>
+      <div class="cal-stat__info">
+        <span class="cal-stat__value">{{ todayTaskCount }}</span>
+        <span class="cal-stat__label">Due today</span>
+      </div>
+    </div>
+
+    <div class="cal-stat glass-card">
+      <div class="cal-stat__icon" style="background:#edfff7">
+        <i class="pi pi-calendar-plus" style="color:#0f6e56"></i>
+      </div>
+      <div class="cal-stat__info">
+        <span class="cal-stat__value">{{ thisWeekCount }}</span>
+        <span class="cal-stat__label">This week</span>
+      </div>
+    </div>
+
+    <div class="cal-stat glass-card">
+      <div class="cal-stat__icon" style="background:#fffbf0">
+        <i class="pi pi-list" style="color:#854f0b"></i>
+      </div>
+      <div class="cal-stat__info">
+        <span class="cal-stat__value">{{ taskService.totalCount() }}</span>
+        <span class="cal-stat__label">Total tasks</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Calendar card -->
+  <div class="cal-card glass-card">
+
+    <!-- Toolbar -->
+    <div class="cal-toolbar">
+
+      <!-- Navigation -->
+      <div class="cal-nav">
+        <button class="cal-nav__btn" (click)="prevPeriod()">
+          <i class="pi pi-chevron-left"></i>
+        </button>
+        <span class="cal-nav__label">
+          {{ viewMode() === 'month' ? monthLabel() : weekLabel() }}
+        </span>
+        <button class="cal-nav__btn" (click)="nextPeriod()">
+          <i class="pi pi-chevron-right"></i>
+        </button>
+      </div>
+
+      <div class="cal-toolbar__right">
+
+        <!-- Today button -->
+        <button class="cal-today-btn" (click)="goToday()">
+          Today
+        </button>
+
+        <!-- View toggle -->
+        <div class="view-toggle">
+          <button
+            class="view-btn"
+            [class.view-btn--active]="viewMode() === 'month'"
+            (click)="viewMode.set('month')"
+          >
+            <i class="pi pi-th-large"></i>
+            Month
+          </button>
+          <button
+            class="view-btn"
+            [class.view-btn--active]="viewMode() === 'week'"
+            (click)="viewMode.set('week')"
+          >
+            <i class="pi pi-calendar"></i>
+            Week
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Priority legend -->
+    <div class="cal-legend">
+      <div class="cal-legend__item">
+        <span class="cal-legend__dot" style="background:#f56565"></span>
+        High
+      </div>
+      <div class="cal-legend__item">
+        <span class="cal-legend__dot" style="background:#f6ad55"></span>
+        Medium
+      </div>
+      <div class="cal-legend__item">
+        <span class="cal-legend__dot" style="background:#68d391"></span>
+        Low
+      </div>
+      <div class="cal-legend__item">
+        <span class="cal-legend__dot" style="background:#a0aec0"></span>
+        Done
+      </div>
+    </div>
+
+    <!-- ── Month view ──────────────────────────────────── -->
+    @if (viewMode() === 'month') {
+
+      <!-- Week day headers -->
+      <div class="month-headers">
+        @for (h of weekHeaders; track h) {
+          <div class="month-header">{{ h }}</div>
+        }
+      </div>
+
+      <!-- Days grid -->
+      <div class="month-grid">
+        @for (day of calendarDays(); track day.date.toISOString()) {
+          <div
+            class="month-day"
+            [class.month-day--other]="!day.isCurrentMonth"
+            [class.month-day--today]="day.isToday"
+            [class.month-day--selected]="day.isSelected"
+            [class.month-day--weekend]="isWeekend(day.date)"
+            (click)="onDayClick(day)"
+          >
+            <!-- Day number -->
+            <div class="month-day__num">
+              {{ getDayNumber(day.date) }}
+            </div>
+
+            <!-- Task dots / pills -->
+            <div class="month-day__tasks">
+              @for (task of day.tasks.slice(0, 3); track task.id) {
+                <div
+                  class="month-task"
+                  [class.month-task--done]="task.done"
+                  [style.background]="task.done
+                    ? '#e2e8f0'
+                    : getPriorityColor(task.priority) + '22'"
+                  [style.color]="task.done
+                    ? '#a0aec0'
+                    : getPriorityColor(task.priority)"
+                  [style.border-left]="'2px solid ' + (task.done
+                    ? '#a0aec0'
+                    : getPriorityColor(task.priority))"
+                  [pTooltip]="task.title"
+                  tooltipPosition="top"
+                  (click)="onTaskClick(task, $event)"
+                >
+                  {{ task.title }}
+                </div>
+              }
+              @if (day.tasks.length > 3) {
+                <div class="month-task-more">
+                  +{{ day.tasks.length - 3 }} more
+                </div>
+              }
+            </div>
+
+          </div>
+        }
+      </div>
+
+    }
+
+    <!-- ── Week view ───────────────────────────────────── -->
+    @if (viewMode() === 'week') {
+      <div class="week-grid">
+        @for (day of weekDays(); track day.date.toISOString()) {
+          <div
+            class="week-day"
+            [class.week-day--today]="day.isToday"
+            (click)="onWeekDayClick(day)"
+          >
+
+            <!-- Day header -->
+            <div class="week-day__header"
+                 [class.week-day__header--today]="day.isToday">
+              <span class="week-day__label">{{ day.label }}</span>
+              <span class="week-day__num">
+                {{ getDayNumber(day.date) }}
+              </span>
+            </div>
+
+            <!-- Tasks -->
+            <div class="week-day__tasks">
+              @if (day.tasks.length === 0) {
+                <div class="week-empty">
+                  <i class="pi pi-plus-circle"></i>
+                </div>
+              }
+
+              @for (task of day.tasks; track task.id) {
+                <div
+                  class="week-task"
+                  [class.week-task--done]="task.done"
+                  [style.background]="task.done
+                    ? '#f1f5f9'
+                    : getPriorityBg(task.priority)"
+                  [style.border-left]="'3px solid ' + (task.done
+                    ? '#a0aec0'
+                    : getPriorityColor(task.priority))"
+                  (click)="onTaskClick(task, $event)"
+                >
+                  <div class="week-task__title"
+                       [class.week-task__title--done]="task.done">
+                    {{ task.title }}
+                  </div>
+                  <div class="week-task__meta">
+                    <span
+                      class="week-task__cat"
+                      [style.color]="getPriorityColor(task.priority)"
+                    >
+                      {{ task.category }}
+                    </span>
+                  </div>
+                </div>
+              }
+            </div>
+
+          </div>
+        }
+      </div>
+    }
+
+  </div>
+
+</div>
+
+<!-- ── Add / Edit Task Modal ────────────────────────────── -->
+<p-dialog
+  [visible]="showModal()"
+  (visibleChange)="showModal.set($event)"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [closable]="true"
+  (onHide)="closeModal()"
+  [header]="editingTask() ? 'Edit Task' : 'Add Task'"
+  [style]="{ width: '480px' }"
+>
+  <form [formGroup]="form" (ngSubmit)="onSave()" novalidate>
+
+    <div class="modal-field">
+      <label>Title <span class="req">*</span></label>
+      <div class="input-wrap glass-input"
+           [class.input-wrap--error]="form.get('title')!.invalid && form.get('title')!.touched">
+        <i class="pi pi-pencil input-icon"></i>
+        <input pInputText formControlName="title"
+               placeholder="Task title" />
+      </div>
+      @if (form.get('title')!.invalid && form.get('title')!.touched) {
+        <span class="field-error">Title required — min 3 characters</span>
+      }
+    </div>
+
+    <div class="modal-field">
+      <label>Description</label>
+      <textarea
+        pTextarea
+        formControlName="description"
+        rows="2"
+        placeholder="Optional details..."
+        class="modal-textarea"
+      ></textarea>
+    </div>
+
+    <div class="modal-row">
+      <div class="modal-field">
+        <label>Priority</label>
+        <p-select
+          formControlName="priority"
+          [options]="priorityOptions"
+          styleClass="w-full"
+        />
+      </div>
+      <div class="modal-field">
+        <label>Category</label>
+        <p-select
+          formControlName="category"
+          [options]="categoryOptions"
+          styleClass="w-full"
+        />
+      </div>
+    </div>
+
+    <div class="modal-field">
+      <label>Due date</label>
+      <p-datepicker
+        formControlName="dueDate"
+        [showIcon]="true"
+        dateFormat="dd/mm/yy"
+        styleClass="w-full"
+        placeholder="Select date"
+      />
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" class="btn-cancel" (click)="closeModal()">
+        Cancel
+      </button>
+      <button type="submit" class="btn-save">
+        <i class="pi"
+           [class.pi-plus]="!editingTask()"
+           [class.pi-check]="!!editingTask()">
+        </i>
+        {{ editingTask() ? 'Update' : 'Add task' }}
+      </button>
+    </div>
+
+  </form>
+</p-dialog>
+
+<!-- ── Task Detail Modal ─────────────────────────────────── -->
+<p-dialog
+  [visible]="showTaskDetail()"
+  (visibleChange)="showTaskDetail.set($event)"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  header="Task detail"
+  [style]="{ width: '420px' }"
+>
+  @if (selectedTask(); as task) {
+    <div class="task-detail">
+
+      <div class="task-detail__header">
+        <span
+          class="priority-badge"
+          [style.background]="getPriorityBg(task.priority)"
+          [style.color]="getPriorityColor(task.priority)"
+        >
+          <i class="pi pi-flag-fill"></i>
+          {{ task.priority | titlecase }}
+        </span>
+        <span class="category-badge">{{ task.category }}</span>
+      </div>
+
+      <h3 class="task-detail__title"
+          [class.task-detail__title--done]="task.done">
+        {{ task.title }}
+      </h3>
+
+      @if (task.description) {
+        <p class="task-detail__desc">{{ task.description }}</p>
+      }
+
+      <div class="task-detail__meta">
+        <div class="task-detail__meta-item">
+          <i class="pi pi-calendar"></i>
+          <span>{{ task.dueDate | date: 'MMM d, yyyy' }}</span>
+        </div>
+        <div class="task-detail__meta-item">
+          <i class="pi pi-circle"
+             [style.color]="task.done ? '#68d391' : '#f6ad55'">
+          </i>
+          <span>{{ task.done ? 'Completed' : 'Pending' }}</span>
+        </div>
+      </div>
+
+      @if (task.tags.length) {
+        <div class="task-detail__tags">
+          @for (tag of task.tags; track tag) {
+            <span class="task-tag">#{{ tag }}</span>
+          }
+        </div>
+      }
+
+      <div class="task-detail__actions">
+        <button
+          class="btn-toggle"
+          [class.btn-toggle--done]="task.done"
+          (click)="onToggleDone(task)"
+        >
+          <i class="pi"
+             [class.pi-check]="!task.done"
+             [class.pi-replay]="task.done">
+          </i>
+          {{ task.done ? 'Mark pending' : 'Mark done' }}
+        </button>
+
+        <button class="btn-edit-task" (click)="openEditModal(task)">
+          <i class="pi pi-pencil"></i>
+          Edit
+        </button>
+
+        <button class="btn-delete-task" (click)="onDelete(task)">
+          <i class="pi pi-trash"></i>
+        </button>
+      </div>
+
+    </div>
+  }
+</p-dialog>

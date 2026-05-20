@@ -1,0 +1,585 @@
+@use '../../../styles/mixins' as *;
+
+.habits-page {
+  @include flex-col;
+  gap: 20px;
+}
+
+// ── Page header ────────────────────────────────────────────
+.page-header {
+  @include flex-between;
+
+  &__left {
+    h2 { margin-bottom: 4px; }
+    p  { font-size: 13px; color: var(--text-muted); margin: 0; }
+  }
+}
+
+.btn-add {
+  @include flex-center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: linear-gradient(
+    135deg,
+    var(--pastel-lavender-400),
+    var(--pastel-rose-300)
+  );
+  color: white;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+
+  &:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+}
+
+// ── Stats grid ─────────────────────────────────────────────
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+.stat-card {
+  @include flex-center;
+  justify-content: flex-start;
+  gap: 14px;
+  padding: 16px 20px;
+
+  &__icon {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-md);
+    @include flex-center;
+    flex-shrink: 0;
+    i { font-size: 20px; }
+  }
+
+  &__body {
+    @include flex-col;
+    gap: 3px;
+  }
+
+  &__value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1;
+  }
+
+  &__label {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  &--progress {
+    gap: 16px;
+  }
+}
+
+// ── Progress ring ──────────────────────────────────────────
+.progress-ring-wrap {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+}
+
+.progress-ring {
+  width: 100%;
+  height: 100%;
+
+  circle:nth-child(2) {
+    transition: stroke-dashoffset 0.6s ease;
+  }
+}
+
+.progress-ring__pct {
+  position: absolute;
+  inset: 0;
+  @include flex-center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--pastel-lavender-500);
+}
+
+// ── Chart card ─────────────────────────────────────────────
+.chart-card {
+  padding: 20px;
+  @include flex-col;
+  gap: 14px;
+
+  &__header {
+    @include flex-between;
+    h4 { font-size: 15px; margin: 0; }
+  }
+
+  &__sub {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+}
+
+.chart-wrap {
+  height: 160px;
+  position: relative;
+}
+
+// ── Category filters ───────────────────────────────────────
+.category-filters {
+  @include flex-center;
+  justify-content: flex-start;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.cat-pill {
+  @include flex-center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: var(--radius-full);
+  font-size: 13px;
+  font-weight: 500;
+  background: var(--bg-surface);
+  border: 1.5px solid var(--border-color);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+
+  i { font-size: 12px; }
+
+  &:hover {
+    border-color: var(--pastel-lavender-300);
+    color: var(--pastel-lavender-600);
+  }
+
+  &--active {
+    background: var(--pastel-lavender-50);
+    border-color: var(--pastel-lavender-400);
+    color: var(--pastel-lavender-600);
+  }
+}
+
+// ── Habits grid ────────────────────────────────────────────
+.habits-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+// ── Empty state ────────────────────────────────────────────
+.empty-state {
+  grid-column: 1 / -1;
+  @include flex-col;
+  align-items: center;
+  padding: 48px 24px;
+  gap: 10px;
+  text-align: center;
+
+  i    { font-size: 36px; color: var(--pastel-lavender-300); }
+  h3   { font-size: 16px; font-weight: 600; margin: 0; }
+  p    { font-size: 13px; color: var(--text-muted); margin: 0; }
+}
+
+// ── Habit card ─────────────────────────────────────────────
+.habit-card {
+  @include flex-col;
+  gap: 14px;
+  padding: 18px;
+  transition: all var(--transition-fast);
+  position: relative;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+
+    .habit-card__actions { opacity: 1; }
+  }
+
+  &--done {
+    border-left: 3px solid var(--pastel-mint-400);
+  }
+
+  &__header {
+    @include flex-center;
+    gap: 12px;
+  }
+
+  &__icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-md);
+    @include flex-center;
+    flex-shrink: 0;
+    i { font-size: 18px; }
+  }
+
+  &__info {
+    @include flex-col;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    @include truncate;
+  }
+
+  &__cat {
+    font-size: 11px;
+    font-weight: 500;
+  }
+
+  &__actions {
+    @include flex-center;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+    flex-shrink: 0;
+  }
+
+  &__desc {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  &__stats {
+    @include flex-center;
+    gap: 16px;
+    padding: 12px 0;
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  &__numbers {
+    @include flex-center;
+    gap: 16px;
+    flex: 1;
+  }
+
+  &__week {
+    @include flex-col;
+    gap: 6px;
+  }
+
+  &__week-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  &__toggle {
+    @include flex-center;
+    gap: 8px;
+    width: 100%;
+    padding: 9px;
+    border-radius: var(--radius-md);
+    border: 1.5px solid;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+
+    i { font-size: 14px; }
+
+    &--done {
+      box-shadow: var(--shadow-sm);
+    }
+
+    &:hover:not(&--done) {
+      opacity: 0.8;
+    }
+  }
+}
+
+// ── Habit action button ────────────────────────────────────
+.habit-action-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  @include flex-center;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+
+  i { font-size: 12px; }
+
+  &:hover {
+    background: var(--pastel-lavender-50);
+    color: var(--pastel-lavender-500);
+  }
+
+  &--del:hover {
+    background: #fff5f5;
+    color: #f56565;
+  }
+}
+
+// ── Habit ring ─────────────────────────────────────────────
+.habit-ring {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  flex-shrink: 0;
+
+  svg {
+    width: 100%;
+    height: 100%;
+
+    circle:nth-child(2) {
+      transition: stroke-dashoffset 0.6s ease;
+    }
+  }
+
+  &__pct {
+    position: absolute;
+    inset: 0;
+    @include flex-center;
+    font-size: 11px;
+    font-weight: 700;
+  }
+}
+
+// ── Habit numbers ──────────────────────────────────────────
+.habit-number {
+  @include flex-col;
+  align-items: center;
+  gap: 2px;
+
+  &__val {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1;
+  }
+
+  &__label {
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+}
+
+// ── Week dots ──────────────────────────────────────────────
+.week-dots {
+  @include flex-center;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.week-dot-wrap {
+  @include flex-col;
+  align-items: center;
+  gap: 3px;
+}
+
+.week-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  transition: all var(--transition-fast);
+
+  &--done {
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  }
+}
+
+.week-dot-day {
+  font-size: 9px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+// ── Modal ──────────────────────────────────────────────────
+.modal-field {
+  @include flex-col;
+  gap: 6px;
+  margin-bottom: 16px;
+
+  label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+
+  .req { color: #f56565; }
+}
+
+.modal-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.modal-textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1.5px solid var(--input-border);
+  border-radius: var(--radius-md);
+  background: var(--input-bg);
+  outline: none;
+  resize: vertical;
+  font-size: 13px;
+  color: var(--text-primary);
+  font-family: inherit;
+
+  &:focus { border-color: var(--input-focus); }
+  &::placeholder { color: var(--text-muted); }
+}
+
+.input-wrap {
+  @include flex-center;
+  gap: 10px;
+  padding: 0 14px;
+  height: 44px;
+
+  .input-icon {
+    font-size: 14px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+
+  input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: 14px;
+    color: var(--text-primary);
+    &::placeholder { color: var(--text-muted); }
+  }
+
+  &--error { border-color: #f56565 !important; }
+}
+
+.field-error {
+  font-size: 12px;
+  color: #f56565;
+}
+
+// ── Icon picker ────────────────────────────────────────────
+.icon-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.icon-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  @include flex-center;
+  background: var(--bg-surface-2);
+  border: 1.5px solid var(--border-color);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+
+  i { font-size: 15px; }
+
+  &:hover {
+    background: var(--pastel-lavender-50);
+    border-color: var(--pastel-lavender-300);
+    color: var(--pastel-lavender-600);
+  }
+
+  &--active {
+    background: var(--pastel-lavender-50);
+    border-color: var(--pastel-lavender-400);
+    color: var(--pastel-lavender-600);
+    box-shadow: var(--shadow-sm);
+  }
+}
+
+// ── Habit color picker ─────────────────────────────────────
+.habit-color-picker {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.hcolor-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid;
+  @include flex-center;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+
+  i { font-size: 13px; }
+
+  &:hover     { transform: scale(1.1); }
+  &--active   { transform: scale(1.15); box-shadow: var(--shadow-sm); }
+}
+
+// ── Modal actions ──────────────────────────────────────────
+.modal-actions {
+  @include flex-center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color);
+}
+
+.btn-cancel {
+  padding: 8px 18px;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+
+  &:hover {
+    background: var(--pastel-lavender-50);
+    color: var(--pastel-lavender-600);
+  }
+}
+
+.btn-save {
+  @include flex-center;
+  gap: 6px;
+  padding: 8px 20px;
+  background: linear-gradient(
+    135deg,
+    var(--pastel-lavender-400),
+    var(--pastel-rose-300)
+  );
+  color: white;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+
+  &:hover { opacity: 0.9; }
+}
+
+// ── Responsive ─────────────────────────────────────────────
+@media (max-width: 1000px) {
+  .stats-grid  { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 600px) {
+  .stats-grid  { grid-template-columns: 1fr 1fr; }
+  .habits-grid { grid-template-columns: 1fr; }
+}
