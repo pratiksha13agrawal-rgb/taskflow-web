@@ -47,6 +47,11 @@
           @if (item.badge && collapsed()) {
             <span class="sidebar__badge sidebar__badge--dot"></span>
           }
+          @if (item.route === '/app/tasks/today' && !collapsed()) {
+            <span class="sidebar__badge">
+              {{ taskService.pendingCount() }}
+            </span>
+          }
         </div>
         @if (!collapsed()) {
           <span class="sidebar__nav-label">{{ item.label }}</span>

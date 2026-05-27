@@ -46,23 +46,33 @@ export class Login {
   get email() { return this.form.get('email')!; }
   get password() { return this.form.get('password')!; }
 
-  onSubmit(): void {
+  onSubmit(): void {   
     if(this.form.invalid) {
       this.form.markAllAsTouched();
+      return;
     }
 
     this.loading.set(true);
+
     this.authService.login({ email: this.email.value!, password: this.password.value!})
       .subscribe({
-        next : () => {
+        next : () => { 
           this.loading.set(false);
-          this.router.navigate(['/app/dashboard']);
+          this.toast.add({
+             severity: 'success',
+             summary:  'Welcome back!',
+             detail:   `Good to see you again 👋`,
+             life:     2000
+           });
+           setTimeout(() =>
+            this.router.navigate(['/app/dashboard']), 500);
         }, error: (err) => {
           this.loading.set(false);
           this.toast.add({
             severity: 'error',
             summary: 'Login failed',
-            detail: err?.error?.message ?? 'Invalid email or password'
+            detail: err?.error?.message ?? 'Invalid email or password',
+            life:     4000            
           });
         }
       });

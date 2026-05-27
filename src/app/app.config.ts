@@ -7,6 +7,7 @@ import { authInterceptor } from './core/interceptors/auth-interceptor';
 import { providePrimeNG } from 'primeng/config';
 import { definePreset } from '@primeng/themes';
 import Aura from '@primeng/themes/aura';
+import { errorInterceptor } from './core/interceptors/error-interceptor';
 
 const TaskFlowPreset = definePreset(Aura, {
   semantic: {
@@ -31,7 +32,7 @@ export const appConfig: ApplicationConfig = {
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes, withViewTransitions()),
-    provideHttpClient(withInterceptors([authInterceptor])),
+    provideHttpClient(withInterceptors([authInterceptor, errorInterceptor])),
     providePrimeNG({
       theme: {
         preset: TaskFlowPreset,

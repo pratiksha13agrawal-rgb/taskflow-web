@@ -1,114 +1,142 @@
 import { HttpClient } from '@angular/common/http';
-import { computed, Injectable, signal } from '@angular/core';
+import { computed, inject, Injectable, signal } from '@angular/core';
 import { Task, Priority, TaskStatus } from '../models/task.model';
+import { Observable, tap } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
 })
 export class TaskService {
-  private http = new (class { constructor(public h: HttpClient) {} })(
-    // will inject properly below
-    null as any
-  );
+  private http = inject(HttpClient);
 
-  // ── Local signal state (used until backend ready) ───────
-  private _tasks = signal<Task[]>([
-    {
-      id: 1, title: 'Design login page mockup',
-      description: 'Create high-fidelity mockup for desktop and mobile login pages',
-      priority: 'high', status: 'in_progress', category: 'Design',
-      dueDate: new Date().toISOString(), createdAt: new Date().toISOString(),
-      done: false, tags: ['ui', 'design']
-    },
-    {
-      id: 2, title: 'Set up Spring Boot project',
-      description: 'Initialize Spring Boot with Security, JPA, and MySQL dependencies',
-      priority: 'high', status: 'pending', category: 'Backend',
-      dueDate: new Date().toISOString(), createdAt: new Date().toISOString(),
-      done: false, tags: ['backend', 'setup']
-    },
-    {
-      id: 3, title: 'Configure JWT authentication',
-      description: 'Implement JWT login and register endpoints with Spring Security',
-      priority: 'high', status: 'pending', category: 'Security',
-      dueDate: new Date().toISOString(), createdAt: new Date().toISOString(),
-      done: false, tags: ['security', 'jwt']
-    },
-    {
-      id: 4, title: 'Build reusable Angular components',
-      description: 'Card, button, input, badge components with SCSS',
-      priority: 'medium', status: 'pending', category: 'Frontend',
-      dueDate: new Date().toISOString(), createdAt: new Date().toISOString(),
-      done: false, tags: ['angular', 'components']
-    },
-    {
-      id: 5, title: 'Create MySQL database schema',
-      description: 'Define tables for users, tasks, habits, notes',
-      priority: 'medium', status: 'pending', category: 'Database',
-      dueDate: new Date().toISOString(), createdAt: new Date().toISOString(),
-      done: false, tags: ['database', 'mysql']
-    },
-    {
-      id: 6, title: 'Write unit tests for auth service',
-      description: 'Cover login, register and token refresh flows',
-      priority: 'low', status: 'pending', category: 'Testing',
-      dueDate: new Date().toISOString(), createdAt: new Date().toISOString(),
-      done: false, tags: ['testing']
-    },
-    {
-      id: 7, title: 'Set up CI/CD pipeline',
-      description: 'GitHub Actions for build and deploy',
-      priority: 'low', status: 'completed', category: 'DevOps',
-      dueDate: new Date().toISOString(), createdAt: new Date().toISOString(),
-      done: true, tags: ['devops']
-    },
-  ]);
+  private _tasks = signal<Task[]>([]);
 
-  // ── Public computed ──────────────────────────────────────
-  tasks       = this._tasks.asReadonly();
-  todayTasks  = computed(() => this._tasks());
-  completed   = computed(() => this._tasks().filter(t => t.done));
-  pending     = computed(() => this._tasks().filter(t => !t.done));
+  tasks          = this._tasks.asReadonly();
+  completed      = computed(() => this._tasks().filter(t => t.done));
+  pending        = computed(() => this._tasks().filter(t => !t.done));
+  totalCount     = computed(() => this._tasks().length);
+  completedCount = computed(() => this._tasks().filter(t => t.done).length);
+  pendingCount   = computed(() => this._tasks().filter(t => !t.done).length);
 
-  totalCount    = computed(() => this._tasks().length);
-  completedCount= computed(() => this._tasks().filter(t => t.done).length);
-  pendingCount  = computed(() => this._tasks().filter(t => !t.done).length);
+  // ── Load all tasks
+  loadTasks(): Observable<any> {
+    return this.http
+      .get<any>(`${environment.apiUrl}/tasks`)
+      .pipe(
+        tap(res => {
+          if (res.success) {
+             this._tasks.set(res.data.map((t: any) => this.mapTask(t)));
+          }
+        })
+      );
+  }
 
-  // ── CRUD (signal-based, swap for HTTP later) ─────────────
-  addTask(task: Omit<Task, 'id' | 'createdAt'>): void {
-    const newTask: Task = {
+  // ── Add task
+  addTask(task: Omit<Task, 'id' | 'createdAt'>): Observable<any> {
+    const payload = {
       ...task,
-      id:        Date.now(),
-      createdAt: new Date().toISOString()
+      tags: Array.isArray(task.tags)
+        ? task.tags.join(',')
+        : task.tags
     };
-    this._tasks.update(tasks => [newTask, ...tasks]);
+    return this.http
+      .post<any>(`${environment.apiUrl}/tasks`, payload)
+      .pipe(
+        tap(res => {
+          if (res.success) {
+            const t = res.data;
+            this._tasks.update(tasks => [{
+              ...this.mapTask(t)
+            }, ...tasks]);
+          }
+        })
+      );
   }
 
-  updateTask(id: number, changes: Partial<Task>): void {
-    this._tasks.update(tasks =>
-      tasks.map(t => t.id === id ? { ...t, ...changes } : t)
-    );
+  // ── Update task
+  updateTask(id: number, changes: Partial<Task>): Observable<any> {
+    const payload = {
+      ...changes,
+      tags: Array.isArray(changes.tags)
+        ? changes.tags.join(',')
+        : changes.tags ?? ''
+    };
+    return this.http
+      .put<any>(`${environment.apiUrl}/tasks/${id}`, payload)
+      .pipe(
+        tap(res => {
+          if (res.success) {
+            this._tasks.update(tasks =>
+              tasks.map(t =>
+                t.id === id ? this.mapTask(res.data) : t
+              )
+            );
+          }
+        })
+      );
   }
 
-  deleteTask(id: number): void {
-    this._tasks.update(tasks => tasks.filter(t => t.id !== id));
+  // ── Delete task 
+  deleteTask(id: number): Observable<any> {
+    return this.http
+      .delete<any>(`${environment.apiUrl}/tasks/${id}`)
+      .pipe(
+        tap(res => {
+          if (res.success) {
+            this._tasks.update(tasks =>
+              tasks.filter(t => t.id !== id)
+            );
+          }
+        })
+      );
   }
 
-  toggleDone(id: number): void {
-    this._tasks.update(tasks =>
-      tasks.map(t =>
-        t.id === id
-          ? { ...t, done: !t.done, status: !t.done ? 'completed' : 'pending' }
-          : t
-      )
-    );
+  // ── Toggle
+  toggleDone(id: number): Observable<any> {
+    return this.http
+      .patch<any>(
+        `${environment.apiUrl}/tasks/${id}/toggle`, {})
+      .pipe(
+        tap(res => {
+          if (res.success) {
+            this._tasks.update(tasks =>
+              tasks.map(t =>
+                t.id === id
+                  ? { ...t,
+                      done: res.data.done,
+                      status: res.data.status }
+                  : t
+              )
+            );
+          }
+        })
+      );
   }
 
-  reorderTasks(tasks: Task[]): void {
-    this._tasks.set(tasks);
+  reorderTasks(updated: Task[]): void {
+    this._tasks.set(updated);
   }
 
   getByPriority(p: Priority): Task[] {
-    return this._tasks().filter(t => t.priority === p && !t.done);
+    return this._tasks().filter(
+      t => t.priority === p && !t.done);
+  }
+
+  private mapTask(t: any): Task {
+     return {
+       id:          t.id,
+       title:       t.title,
+       description: t.description ?? '',
+       priority:    t.priority as Priority,
+       status:      t.status,
+       category:    t.category ?? 'Personal',
+       dueDate:     t.dueDate ?? new Date().toISOString(),
+       createdAt:   t.createdAt,
+       done:        t.done,
+       tags:        t.tags
+         ? t.tags.split(',').filter((x: string) => x.trim() !== '')
+         : []
+     };
   }
 }

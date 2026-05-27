@@ -38,7 +38,7 @@ import { DatePickerModule }    from 'primeng/datepicker';
   styleUrl: './today-tasks.scss',
   standalone: true
 })
-export class TodayTasks {
+export class TodayTasks implements OnInit{
   taskService = inject(TaskService);
   private fb  = inject(FormBuilder);
   private msg = inject(MessageService);
@@ -70,6 +70,10 @@ export class TodayTasks {
 
   priorities: Priority[] = ['high', 'medium', 'low'];
   priorityConfig = PRIORITY_CONFIG;
+
+  ngOnInit(): void {
+    this.taskService.loadTasks().subscribe();
+  }
 
   // ── Form ─────────────────────────────────────────────────
   form = this.fb.group({
@@ -137,9 +141,9 @@ export class TodayTasks {
 
   // ── Tags ─────────────────────────────────────────────────
   onTagKeydown(event: KeyboardEvent): void {
-    if (event.key !== 'Enter') return;
+    if (event.key !== 'Enter' && event.key !== ',') return;
     event.preventDefault();
-    const val = this.tagInput().trim().toLowerCase();
+    const val = this.tagInput().trim().toLowerCase().replace(',', '');
     if (val && !this.tags().includes(val)) {
       this.tags.update(t => [...t, val]);
     }
@@ -156,9 +160,9 @@ export class TodayTasks {
       this.form.markAllAsTouched();
       return;
     }
+
     const v       = this.form.value;
     const editing = this.editingTask();
-
     if (editing) {
       this.taskService.updateTask(editing.id, {
         title:       v.title!,
@@ -167,8 +171,15 @@ export class TodayTasks {
         category:    v.category!,
         dueDate:     (v.dueDate as Date)?.toISOString() ?? '',
         tags:        this.tags()
+      }).subscribe({
+        next: () => {
+          this.msg.add({ severity: 'success', summary: 'Task updated', life: 2500 });
+          this.closeModal();
+        },
+        error: (err) => {
+          this.msg.add({ severity: 'error', summary: 'Error', detail: err.userMessage, life: 3000 });
+        }
       });
-      this.msg.add({ severity: 'success', summary: 'Task updated', life: 2500 });
     } else {
       this.taskService.addTask({
         title:       v.title!,
@@ -179,30 +190,60 @@ export class TodayTasks {
         status:      'pending',
         done:        false,
         tags:        this.tags()
+      }).subscribe({
+        next: () => {
+          this.msg.add({ severity: 'success', summary: 'Task added', life: 2500 });
+          this.closeModal();
+        },
+        error: (err) => {
+          this.msg.add({ severity: 'error', summary: 'Error', detail: err.userMessage, life: 3000 });
+        }
       });
-      this.msg.add({ severity: 'success', summary: 'Task added', life: 2500 });
     }
-    this.closeModal();
   }
 
   // ── Delete ───────────────────────────────────────────────
   onDelete(task: Task, event: Event): void {
     event.stopPropagation();
     this.confirmSvc.confirm({
-      message: `Delete "${task.title}"?`,
-      header:  'Confirm delete',
-      icon:    'pi pi-trash',
-      accept:  () => {
-        this.taskService.deleteTask(task.id);
-        this.msg.add({ severity: 'warn', summary: 'Task deleted', life: 2500 });
-      }
+       message: `Delete "${task.title}"?`,
+       header:  'Confirm delete',
+       icon:    'pi pi-trash',
+       accept:  () => {
+         this.taskService.deleteTask(task.id).subscribe({
+           next: () => {
+             this.msg.add({
+               severity: 'warn',
+               summary:  'Task deleted',
+               life:     2500
+             });
+           },
+           error: (err) => {
+             this.msg.add({
+               severity: 'error',
+               summary:  'Error',
+               detail:   err.userMessage,
+               life:     3000
+             });
+           }
+         });
+       }
     });
   }
 
   // ── Toggle ───────────────────────────────────────────────
   onToggle(id: number, event: Event): void {
     event.stopPropagation();
-    this.taskService.toggleDone(id);
+    this.taskService.toggleDone(id).subscribe({
+    error: (err) => {
+      this.msg.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: err.userMessage,
+        life: 3000
+      });
+    }
+  });
   }
 
   // ── Drag drop ────────────────────────────────────────────

@@ -2,14 +2,26 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
+import { environment } from '../../../environments/environment';
+
 
 export interface LoginRequest  { email: string; password: string; }
 export interface RegisterRequest {
   name: string; email: string; password: string;
 }
-export interface AuthResponse  {
-  accessToken: string;
-  user: { id: number; name: string; email: string; avatar?: string; };
+export interface AuthResponse    {
+  success: boolean;
+  message: string;
+  data: {
+    accessToken: string;
+    tokenType:   string;
+    user: {
+      id:     number;
+      name:   string;
+      email:  string;
+      avatar: string;
+    };
+  };
 }
 
 @Injectable({
@@ -19,7 +31,7 @@ export class AuthService {
   private http = inject(HttpClient);
   private router = inject(Router);
 
-  currentUser = signal<AuthResponse['user'] | null>(null); 
+  currentUser = signal<AuthResponse['data']['user'] | null>(null); 
 
   constructor() {
     const stored = localStorage.getItem('user');
@@ -27,35 +39,22 @@ export class AuthService {
   }
 
   login(data: LoginRequest): Observable<AuthResponse> {
-    const mock: AuthResponse = {
-      accessToken: 'mock-jwt-token-12345',
-      user: { id: 1, name: 'Rahul Patel', email: data.email }
-    };
-    return new Observable(observer => {
-      setTimeout(() => {
-        localStorage.setItem('access_token', mock.accessToken);
-        localStorage.setItem('user', JSON.stringify(mock.user));
-        this.currentUser.set(mock.user);
-        observer.next(mock);
-        observer.complete();
-      }, 800);
-    });
+    return this.http
+      .post<AuthResponse>(
+        `${environment.apiUrl}/auth/login`,data)
+      .pipe(
+        tap(res => {
+          localStorage.setItem('access_token', res.data.accessToken);
+          localStorage.setItem('user', JSON.stringify(res.data.user));
+          this.currentUser.set(res.data.user);
+        })
+      );
   }
 
   register(data: RegisterRequest): Observable<AuthResponse> {
-    const mock: AuthResponse = {
-      accessToken: 'mock-jwt-token-12345',
-      user: { id: 1, name: data.name, email: data.email }
-    };
-    return new Observable(observer => {
-      setTimeout(() => {
-        localStorage.setItem('access_token', mock.accessToken);
-        localStorage.setItem('user', JSON.stringify(mock.user));
-        this.currentUser.set(mock.user);
-        observer.next(mock);
-        observer.complete();
-      }, 800);
-    });
+    return this.http
+      .post<AuthResponse>(
+        `${environment.apiUrl}/auth/register`,data);
   }
 
   logout(): void {

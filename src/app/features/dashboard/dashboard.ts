@@ -4,6 +4,8 @@ import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth-service';
 import { HabitRing, RecentTask, StatCard } from '../../core/models/dashboard.models';
 import { Chart, registerables } from 'chart.js';
+import { TaskService } from '../../core/services/task-service';
+import { HabitService } from '../../core/services/habit-service';
 Chart.register(...registerables);
 @Component({
   selector: 'app-dashboard',
@@ -14,6 +16,8 @@ Chart.register(...registerables);
 })
 export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
   auth = inject(AuthService);
+  taskService = inject(TaskService);
+  habitService = inject(HabitService);
 
   @ViewChild('progressChart') progressChartRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('weekChart')     weekChartRef!:     ElementRef<HTMLCanvasElement>;
@@ -21,85 +25,107 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
   private progressChart?: Chart<'doughnut'>;
   private weekChart?:     Chart<'bar'>;
 
+  todayTaskCount = computed(() => {
+    const today = new Date().toDateString();
+    return this.taskService.tasks().filter(
+      t => new Date(t.dueDate).toDateString() === today
+    ).length;
+  });
+
+  overdueCount = computed(() => {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    return this.taskService.tasks().filter(
+      t => !t.done && new Date(t.dueDate) < now
+    ).length;
+  });
 
   // ── Stat cards ──────────────────────────────────────────
-  statCards = signal<StatCard[]>([
+  statCards = computed<StatCard[]>(() => [
     {
       label:      'Total Tasks',
-      value:      24,
+      value:      this.taskService.totalCount(),
       icon:       'pi pi-list',
       color:      'var(--pastel-lavender-500)',
       bgColor:    'var(--pastel-lavender-50)',
-      change:     '+3 this week',
-      changeType: 'up'
+      change:     `${this.taskService.pendingCount()} remaining`,
+      changeType: 'neutral'
     },
     {
       label:      "Today's Tasks",
-      value:      8,
+      value:      this.todayTaskCount(),
       icon:       'pi pi-check-square',
       color:      'var(--pastel-sky-400)',
       bgColor:    'var(--pastel-sky-50)',
-      change:     '5 remaining',
+      change:     `${this.taskService.pendingCount()} remaining`,
       changeType: 'neutral'
     },
     {
       label:      'Completed',
-      value:      16,
+      value:      this.taskService.completedCount(),
       icon:       'pi pi-check-circle',
       color:      'var(--pastel-mint-400)',
       bgColor:    'var(--pastel-mint-50)',
-      change:     '+5 today',
+      change:     `+${this.taskService.completedCount()} total`,
       changeType: 'up'
     },
     {
       label:      'Overdue',
-      value:      2,
+      value:      this.overdueCount(),
       icon:       'pi pi-exclamation-circle',
       color:      'var(--priority-high)',
       bgColor:    '#fff5f5',
-      change:     '-1 from yesterday',
+      change:     'Need attention',
       changeType: 'down'
     }
   ]);
 
   // ── Recent tasks ────────────────────────────────────────
-  recentTasks = signal<RecentTask[]>([
-    { id:1, title:'Design login page mockup',    category:'Design',    priority:'high',   due:'Today',     done:false },
-    { id:2, title:'Set up Spring Boot project',  category:'Backend',   priority:'high',   due:'Today',     done:false },
-    { id:3, title:'Write API documentation',     category:'Backend',   priority:'medium', due:'Tomorrow',  done:false },
-    { id:4, title:'Create reusable components',  category:'Frontend',  priority:'medium', due:'Jun 18',    done:false },
-    { id:5, title:'Set up MySQL database',       category:'Database',  priority:'low',    due:'Jun 19',    done:true  },
-    { id:6, title:'Configure JWT auth',          category:'Security',  priority:'high',   due:'Today',     done:true  },
-  ]);
+  recentTasks = computed(() =>
+    this.taskService.tasks().slice(0, 6)
+  );
 
   // ── Habit rings ─────────────────────────────────────────
-  habitRings = signal<HabitRing[]>([
-    { name:'Morning run',   progress:85, color:'var(--pastel-mint-400)',     streak:12 },
-    { name:'Read 30 mins',  progress:60, color:'var(--pastel-lavender-400)', streak:7  },
-    { name:'Drink water',   progress:100,color:'var(--pastel-sky-400)',      streak:21 },
-    { name:'Meditate',      progress:40, color:'var(--pastel-rose-400)',     streak:4  },
-  ]);
+  habitRings = computed<HabitRing[]>(() =>
+    this.habitService.habits().map(h => ({
+      name:     h.name,
+      progress: this.habitService.getCompletionRate(h),
+      color:    h.color,
+      streak:   this.habitService.getStreak(h)
+    }))
+  );
 
   // ── Computed ────────────────────────────────────────────
   completionRate = computed(() => {
-    const tasks = this.recentTasks();
-    const done  = tasks.filter(t => t.done).length;
-    return Math.round((done / tasks.length) * 100);
+    const total = this.taskService.totalCount();
+    const done  = this.taskService.completedCount();
+    return total ? Math.round((done / total) * 100) : 0;
   });
 
   pendingTasks = computed(() =>
-    this.recentTasks().filter(t => !t.done)
+    this.taskService.tasks().filter(t => !t.done)
   );
 
   // ── Lifecycle ───────────────────────────────────────────
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    this.taskService.loadTasks().subscribe({
+      next: () => {
+        setTimeout(() => {
+          this.progressChart?.destroy();
+          this.weekChart?.destroy();
+          this.buildProgressChart();
+          this.buildWeekChart();
+        }, 0);
+      }
+    });
+  }
 
-ngAfterViewInit(): void {
-  setTimeout(() => {
-    this.buildProgressChart();
-    this.buildWeekChart();
-  }, 0);
-}
+  ngAfterViewInit(): void {
+    setTimeout(() => {
+      this.buildProgressChart();
+      this.buildWeekChart();
+    }, 0);
+  }
 
   ngOnDestroy(): void {
     this.progressChart?.destroy();
@@ -109,12 +135,17 @@ ngAfterViewInit(): void {
   // ── Charts ──────────────────────────────────────────────
   private buildProgressChart(): void {
     const ctx = this.progressChartRef.nativeElement.getContext('2d')!;
+    if (!ctx) return;
+
+    const completed = this.taskService.completedCount();
+    const pending   = this.taskService.pendingCount();
+
     this.progressChart = new Chart<'doughnut'>(ctx, {
       type: 'doughnut',
       data: {
         labels: ['Completed', 'Remaining'],
         datasets: [{
-          data:            [16, 8],
+          data:            [completed, pending],
           backgroundColor: ['#9d8ef0', '#ede8ff'],
           borderWidth:     0,
           hoverOffset:     4
@@ -127,8 +158,7 @@ ngAfterViewInit(): void {
           legend: { display: false },
           tooltip: {
             callbacks: {
-              label: ctx =>
-                ` ${ctx.label}: ${ctx.raw} tasks`
+              label: ctx => ` ${ctx.label}: ${ctx.raw} tasks`
             }
           }
         }
@@ -138,21 +168,48 @@ ngAfterViewInit(): void {
 
   private buildWeekChart(): void {
     const ctx = this.weekChartRef.nativeElement.getContext('2d')!;
+    if (!ctx) return;
+
+    const days  = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const today = new Date().getDay();
+    const tasks = this.taskService.tasks();
+    
+    const completedData = days.map((_, i) => {
+      const dayIndex = (i + 1) % 7;
+      const date     = new Date();
+      date.setDate(date.getDate() - ((today - dayIndex + 7) % 7));
+      const dateStr  = date.toDateString();
+      return tasks.filter(t =>
+        t.done &&
+        new Date(t.dueDate).toDateString() === dateStr
+      ).length;
+    });
+
+    const addedData = days.map((_, i) => {
+      const dayIndex = (i + 1) % 7;
+      const date     = new Date();
+      date.setDate(date.getDate() - ((today - dayIndex + 7) % 7));
+      const dateStr  = date.toDateString();
+      return tasks.filter(t =>
+        new Date(t.createdAt).toDateString() === dateStr
+      ).length;
+    });
+
     this.weekChart = new Chart<'bar'>(ctx, {
       type: 'bar',
       data: {
-        labels:   ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+        labels:   days,
         datasets: [
           {
             label:           'Completed',
-            data:            [4, 6, 3, 7, 5, 2, 4],
+            data:            completedData,
             backgroundColor: 'rgba(157, 142, 240, 0.75)',
             borderRadius:    6,
             borderSkipped:   false,
           },
           {
             label:           'Added',
-            data:            [5, 7, 4, 8, 6, 3, 5],
+            data:            addedData,
             backgroundColor: 'rgba(255, 138, 184, 0.45)',
             borderRadius:    6,
             borderSkipped:   false,
@@ -196,9 +253,7 @@ ngAfterViewInit(): void {
 
   // ── Actions ─────────────────────────────────────────────
   toggleTask(id: number): void {
-    this.recentTasks.update(tasks =>
-      tasks.map(t => t.id === id ? { ...t, done: !t.done } : t)
-    );
+    this.taskService.toggleDone(id);
   }
 
   getPriorityColor(p: 'high' | 'medium' | 'low'): string {

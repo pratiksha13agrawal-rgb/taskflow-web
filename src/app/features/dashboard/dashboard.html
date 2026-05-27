@@ -162,7 +162,7 @@
           <!-- Due date -->
           <div class="task-row__due">
             <i class="pi pi-calendar"></i>
-            {{ task.due }}
+            {{ task.dueDate | date: 'MMM d' }}
           </div>
 
         </div>

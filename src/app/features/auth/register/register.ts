@@ -98,16 +98,18 @@ export class Register {
         this.toast.add({
           severity: 'success',
           summary: 'Account created!',
-          detail: 'Welcome to TaskFlow'
+          detail: 'Please login to continue',
+          life:     3000
         });
-        setTimeout(() => this.router.navigate(['/app/dashboard']), 800);
+        setTimeout(() => this.router.navigate(['/auth/login']), 1000);
       },
       error: (err) => {
         this.loading.set(false);
         this.toast.add({
           severity: 'error',
           summary: 'Registration failed',
-          detail: err?.error?.message ?? 'Something went wrong'
+          detail: err?.error?.message ?? 'Something went wrong',
+          life:     4000
         });
       }
     });
