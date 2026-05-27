@@ -338,14 +338,6 @@
   }
 }
 
-.p-overlay {
-  z-index: 9999 !important;
-}
-
-.p-overlay-open {
-  z-index: 9999 !important;
-}
-
 // ── Responsive ─────────────────────────────────────────────
 @media (max-width: 900px) {
   .stats-row { grid-template-columns: 1fr 1fr; }
