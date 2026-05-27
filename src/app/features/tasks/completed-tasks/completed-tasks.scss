@@ -81,6 +81,8 @@
   gap: 12px;
   padding: 14px 16px;
   flex-wrap: wrap;
+  position: relative;
+  z-index: 100;
 
   &__search {
     @include flex-center;
@@ -334,6 +336,14 @@
       transform: translateY(-1px);
     }
   }
+}
+
+.p-overlay {
+  z-index: 9999 !important;
+}
+
+.p-overlay-open {
+  z-index: 9999 !important;
 }
 
 // ── Responsive ─────────────────────────────────────────────

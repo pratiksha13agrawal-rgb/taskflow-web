@@ -68,7 +68,7 @@
 
     <!-- Category filter -->
     <p-select
-      [options]="categoryOptions"
+      [options]="categoryOptions()"
       [ngModel]="selectedCategory()"
       (ngModelChange)="selectedCategory.set($event)"
       styleClass="filter-select"
@@ -77,7 +77,7 @@
 
     <!-- Priority filter -->
     <p-select
-      [options]="priorityOptions"
+      [options]="priorityOptions()"
       [ngModel]="selectedPriority()"
       (ngModelChange)="selectedPriority.set($event)"
       styleClass="filter-select"

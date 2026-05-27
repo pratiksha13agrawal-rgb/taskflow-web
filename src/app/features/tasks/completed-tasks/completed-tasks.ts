@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
@@ -25,7 +25,7 @@ import { Task, Priority, PRIORITY_CONFIG } from '../../../core/models/task.model
 
   standalone: true
 })
-export class CompletedTasks {
+export class CompletedTasks implements OnInit {
   taskService = inject(TaskService);
   private msg = inject(MessageService);
   private confirmSvc = inject(ConfirmationService);
@@ -36,25 +36,28 @@ export class CompletedTasks {
 
   priorityConfig = PRIORITY_CONFIG;
 
-  categoryOptions = [
-    { label: 'All Categories', value: 'all'      },
-    { label: 'Design',         value: 'Design'   },
-    { label: 'Frontend',       value: 'Frontend' },
-    { label: 'Backend',        value: 'Backend'  },
-    { label: 'Database',       value: 'Database' },
-    { label: 'Security',       value: 'Security' },
-    { label: 'Testing',        value: 'Testing'  },
-    { label: 'DevOps',         value: 'DevOps'   },
-    { label: 'Personal',       value: 'Personal' },
-    { label: 'Other',          value: 'Other'    },
-  ];
-
-  priorityOptions = [
-    { label: 'All Priorities', value: 'all'    },
-    { label: 'High',           value: 'high'   },
-    { label: 'Medium',         value: 'medium' },
-    { label: 'Low',            value: 'low'    },
-  ];
+  categoryOptions = computed(() => {
+    const cats = [...new Set(
+      this.taskService.completed().map(t => t.category)
+    )];
+    return [
+      { label: 'All Categories', value: 'all' },
+      ...cats.map(c => ({ label: c, value: c }))
+    ];
+  });
+  
+  priorityOptions = computed(() => {
+    const priorities = [...new Set(
+      this.taskService.completed().map(t => t.priority)
+    )];
+    return [
+      { label: 'All Priorities', value: 'all' },
+      ...priorities.map(p => ({
+        label: p.charAt(0).toUpperCase() + p.slice(1),
+        value: p
+      }))
+    ];
+  });
 
   // ── Computed ─────────────────────────────────────────────
   filteredCompleted = computed(() => {
@@ -80,17 +83,39 @@ export class CompletedTasks {
     return total ? Math.round((done / total) * 100) : 0;
   });
 
+  // ── life cycles ──────────────────────────────────────────────
+  ngOnInit(): void {
+    this.taskService.loadTasks().subscribe();
+  }
+
   // ── Actions ──────────────────────────────────────────────
   onRestore(task: Task): void {
     this.taskService.updateTask(task.id, {
-      done:   false,
-      status: 'pending'
-    });
-    this.msg.add({
-      severity: 'success',
-      summary:  'Task restored',
-      detail:   `"${task.title}" moved back to pending`,
-      life:     2500
+    done:   false,
+    status: 'pending',
+    title:       task.title,
+    description: task.description,
+    priority:    task.priority,
+    category:    task.category,
+    dueDate:     task.dueDate,
+    tags:        task.tags
+    }).subscribe({
+      next: () => {
+        this.msg.add({
+          severity: 'success',
+          summary:  'Task restored',
+          detail:   `"${task.title}" moved back to pending`,
+          life:     2500
+        });
+      },
+      error: (err) => {
+        this.msg.add({
+          severity: 'error',
+          summary:  'Error',
+          detail:   err.userMessage,
+          life:     3000
+        });
+      }
     });
   }
 
@@ -100,11 +125,22 @@ export class CompletedTasks {
       header:  'Confirm delete',
       icon:    'pi pi-trash',
       accept:  () => {
-        this.taskService.deleteTask(task.id);
-        this.msg.add({
-          severity: 'warn',
-          summary:  'Task deleted',
-          life:     2500
+        this.taskService.deleteTask(task.id).subscribe({
+          next: () => {
+            this.msg.add({
+              severity: 'warn',
+              summary:  'Task deleted',
+              life:     2500
+            });
+          },
+          error: (err) => {
+            this.msg.add({
+              severity: 'error',
+              summary:  'Error',
+              detail:   err.userMessage,
+              life:     3000
+            });
+          }
         });
       }
     });
@@ -117,11 +153,25 @@ export class CompletedTasks {
       icon:    'pi pi-exclamation-triangle',
       accept:  () => {
         const completed = this.taskService.completed();
-        completed.forEach(t => this.taskService.deleteTask(t.id));
-        this.msg.add({
-          severity: 'warn',
-          summary:  'All completed tasks cleared',
-          life:     2500
+        const deleteRequests = completed.map(t =>
+          this.taskService.deleteTask(t.id)
+        );
+
+        // Delete all one by one
+        let deleted = 0;
+        deleteRequests.forEach(req => {
+          req.subscribe({
+            next: () => {
+              deleted++;
+              if(deleted == completed.length) {
+                this.msg.add({
+                  severity: 'warn',
+                  summary: 'All completed tasks cleared',
+                  life:     2500
+                });
+              }
+            }
+          });
         });
       }
     });
